@@ -10,6 +10,7 @@ The flagship skill, `dual-compiler-delphi-lazarus`, hands Claude everything it n
 - **What actually breaks between the two RTLs** — a catalog of real Delphi/FPC divergences (threading, sockets, encoding, memory, types...), each with the symptom, the root cause, and the fix that was used, so Claude isn't guessing.
 - **How to keep both compilers honestly tested** — the mirrored DUnitX (Delphi) + FPCUnit (FPC) pattern, why both matter for memory-leak detection, and the sharp edges around Delphi Community Edition not building from the command line.
 - **Scaffolding and verification tooling** — `scripts/scaffold_dual_project.py` generates the skeleton of a new dual-compiler project (`.inc`, starter unit, `.dpr`/`.dproj` + `.lpi`, project groups); `scripts/verify_test_mirrors.py` statically checks that DUnitX/FPCUnit test mirrors stay in sync; `assets/github-actions-fpc-linux.yml` is a copyable CI starting point for the FPC/Linux side.
+- **`.dfm`/`.lfm` form-file drift** — the harshest source of real friction in dual-compiler VCL/LCL projects, and what to do about it. See [below](#a-known-hard-problem-dfmlfm-forms).
 
 It triggers automatically whenever the conversation touches this territory — starting a new dual-compiler project, porting one from a single compiler, or debugging something that only fails on one side — without needing to say "use the skill" explicitly.
 
@@ -20,6 +21,12 @@ It triggers automatically whenever the conversation touches this territory — s
 | [`dual-compiler-delphi-lazarus`](dual-compiler-delphi-lazarus/SKILL.md) | Everything described above, plus full reference docs in [`references/`](dual-compiler-delphi-lazarus/references/) and runnable tooling in [`scripts/`](dual-compiler-delphi-lazarus/scripts/) and [`assets/`](dual-compiler-delphi-lazarus/assets/) |
 
 More skills will land here as they get extracted from ongoing work — refactoring patterns, packaging/build tooling, component-library conventions, etc.
+
+## A known hard problem: `.dfm`/`.lfm` forms
+
+If your project has VCL/LCL forms, read this before anything else — it causes more real friction than any RTL divergence the skill documents. Delphi's `.dfm` and Lazarus's `.lfm` are two **independently hand-maintained** files behind the same form, and both IDEs **silently rewrite the entire file** when a form is opened and saved in their designer — not just what a developer changed. Confirmed by diffing real pairs: Lazarus stamps a per-form DPI value into the `.lfm`, and reopening a form on a different-scale display rewrites *every coordinate in the file* to match, with nothing about the layout actually changing; `Anchors` sets get canonically reordered by each serializer; accented text gets re-encoded. None of that is a bug to fix — it's just what happens when a file is round-tripped through a design-time tool that owns its own serialization rules.
+
+**Recommendation**: don't hand-edit a `.dfm`/`.lfm` expecting the change to survive, don't review a designer-save diff line by line (open the form visually instead), and — where the project can afford it — prefer building UI in `.pas` code instead of relying on the form designer at all. [`opcb-object-pascal-component-builder`](https://github.com/fabianoallex/opcb-object-pascal-component-builder) exists specifically for this: it builds VCL/LCL/FMX components fluently in code, with real examples that ship no `.dfm`/`.lfm` at all and compile unmodified on both compilers. See `dual-compiler-delphi-lazarus/references/forms-dfm-lfm.md` for the full catalog and the evidence behind each claim.
 
 ## Why this repo exists
 
