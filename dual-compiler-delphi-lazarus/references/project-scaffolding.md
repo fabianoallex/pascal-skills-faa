@@ -10,14 +10,22 @@ that repo) — not invented from scratch. The only content the script
 generates is name substitution, a freshly minted project GUID, and the
 relative search-path depth.
 
-**Generated `.dproj`/`.lpi` files are unverified against a real IDE.**
-Every XML file the script writes is parsed with `xml.dom.minidom`
+**Every XML file the script writes is parsed with `xml.dom.minidom`**
 immediately after writing — a parse failure deletes the file and aborts
 rather than leaving something broken on disk — but well-formed XML is a
-floor, not proof Delphi or Lazarus will accept the file. Open the generated
-`.dproj` in Delphi and `.lpi` in Lazarus once each and confirm they load
-without a "repair project" prompt and build a runnable binary before
-relying on the skeleton for real work.
+floor, not proof Delphi or Lazarus will accept the file.
+
+Confirmed end-to-end (2026-09): a `new --name DemoApp` skeleton opened
+cleanly in both real IDEs — no "repair project" prompt in Delphi, no
+migration prompt in Lazarus — and both built and ran the console app
+correctly (`DemoApp.exe` printed the expected greeting from both the
+Delphi `Win32\Debug\` output and the Lazarus/FPC output at the project
+root). That round-trip covers the plain console-app case this script
+targets; it hasn't been re-verified for every `--with-lpk`/`add` combination
+or every Delphi/Lazarus version. Open a freshly generated `.dproj` in Delphi
+and `.lpi` in Lazarus once each and confirm they load and build before
+relying on the skeleton for real work — especially after changing anything
+in the templates.
 
 ## A real discovery worth knowing: you often don't need a separate `.lpr`
 
