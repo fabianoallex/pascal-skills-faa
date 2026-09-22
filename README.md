@@ -19,6 +19,7 @@ The flagship skill, `dual-compiler-delphi-lazarus`, hands Claude everything it n
 - **How to keep both compilers honestly tested** — the mirrored DUnitX (Delphi) + FPCUnit (FPC) pattern, why both matter for memory-leak detection, and the sharp edges around Delphi Community Edition not building from the command line.
 - **Scaffolding and verification tooling** — `scripts/scaffold_dual_project.py` generates the skeleton of a new dual-compiler project (`.inc`, starter unit, `.dpr`/`.dproj` + `.lpi`, project groups); `scripts/verify_test_mirrors.py` statically checks that DUnitX/FPCUnit test mirrors stay in sync; `assets/github-actions-fpc-linux.yml` is a copyable CI starting point for the FPC/Linux side.
 - **`.dfm`/`.lfm` form-file drift** — the harshest source of real friction in dual-compiler VCL/LCL projects, and what to do about it. See [below](#a-known-hard-problem-dfmlfm-forms).
+- **Native library interop on Linux** — OpenSSL 3.0's default provider not being active by default (breaks certificate/PKCS12 loading on Debian 12/Ubuntu 22.04), FPU exceptions native C libraries trip that FPC leaves unmasked, and a handful of other Linux-only gotchas around OpenSSL/libxml2 that never show up testing on Windows.
 
 It triggers automatically whenever the conversation touches this territory — starting a new dual-compiler project, porting one from a single compiler, or debugging something that only fails on one side — without needing to say "use the skill" explicitly.
 

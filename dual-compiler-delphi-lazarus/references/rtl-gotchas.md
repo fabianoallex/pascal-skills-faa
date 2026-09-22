@@ -15,6 +15,7 @@ If you find a new gotcha that isn't listed here, it's worth adding it in this sa
 ## Sockets / timeout
 
 - **Delphi's `TSocket.ReceiveTimeout`/`SendTimeout` only take effect if assigned while the socket is already connected**: Delphi's implementation pushes the timeout onto the real socket inside `CreateSocket`, at a point where the handle may still be invalid — assigning the timeout before connecting has no effect. Symptom: "FPC honors the timeout correctly, but Delphi waits for the entire command (or hangs) even with a timeout configured." Fix by re-assigning the timeout *after* the socket is connected. — [`pascal-redis-faa`](https://github.com/fabianoallex/pascal-redis-faa)
+- **Without `TCP_NODELAY`, Nagle's algorithm plus delayed ACK costs ~40ms per round-trip on Linux (up to 200ms on Windows outside loopback) for a small-frame request/response protocol — and testing over Windows loopback hides it completely.** A 457-test server suite dropped from 12m59s to 50s on Linux/Docker after setting `TCP_NODELAY` on every socket at connect and accept. Don't trust a fast Windows-loopback run to represent Linux or real-network behavior for latency-sensitive request/response protocols. — [`pascal-amqp-faa`](https://github.com/fabianoallex/pascal-amqp-faa)
 
 ## Files / operating system
 
