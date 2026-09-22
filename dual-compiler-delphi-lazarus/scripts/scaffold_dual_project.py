@@ -447,7 +447,18 @@ def validate_xml(path):
         )
 
 
-def write_file(path, content, dry_run, force, validate_as_xml=False):
+def write_file(path, content, dry_run, force, validate_as_xml=False, bom=False):
+    """`bom=True` writes a UTF-8 byte-order mark, matching what Delphi itself
+    stamps on files it creates through File > New (.pas, .dpr/.lpr,
+    .dproj/.groupproj -- confirmed by inspecting real IDE-produced files).
+    Lazarus's own XML-based files (.lpi/.lpg/.lpk) and .inc files are NOT
+    BOM-stamped in any of the reference projects -- they declare UTF-8 via
+    the XML prologue instead, or (for .inc) were simply never created
+    through the IDE's New File flow. Getting this wrong means a generated
+    .pas file with a BOM-less encoding gets read as ANSI the first time
+    Delphi opens it -- harmless while the content is pure ASCII, but wrong
+    the moment anyone adds an accented character, and inconsistent with
+    every real .pas file in these repos regardless."""
     path = Path(path)
     if path.exists() and not force:
         raise SystemExit(
@@ -457,7 +468,7 @@ def write_file(path, content, dry_run, force, validate_as_xml=False):
     if dry_run:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8", newline="\n")
+    path.write_text(content, encoding="utf-8-sig" if bom else "utf-8", newline="\n")
     if validate_as_xml:
         try:
             validate_xml(path)
@@ -509,13 +520,13 @@ def cmd_new(args):
 
     write_file(inc_path, render(INC_TEMPLATE, DEFINE=define_prefix), args.dry_run, args.force)
     write_file(unit_path, render(STARTER_UNIT_TEMPLATE, NAME=name, INC_NAME=inc_name),
-               args.dry_run, args.force)
-    write_file(dpr_path, render(DPR_TEMPLATE, NAME=name), args.dry_run, args.force)
+               args.dry_run, args.force, bom=True)
+    write_file(dpr_path, render(DPR_TEMPLATE, NAME=name), args.dry_run, args.force, bom=True)
 
     src_rel = to_win_path(os.path.relpath(src_dir, project_dir))
     write_file(dproj_path,
                render(DPROJ_TEMPLATE, NAME=name, GUID=new_guid(), SRC_REL=src_rel),
-               args.dry_run, args.force, validate_as_xml=True)
+               args.dry_run, args.force, validate_as_xml=True, bom=True)
 
     if args.with_lpk:
         pkg_name = "%s_pkg" % name.lower()
@@ -531,7 +542,7 @@ def cmd_new(args):
                args.dry_run, args.force, validate_as_xml=True)
 
     write_file(groupproj_path, render(GROUPPROJ_TEMPLATE, NAME=name, GUID=new_guid()),
-               args.dry_run, args.force, validate_as_xml=True)
+               args.dry_run, args.force, validate_as_xml=True, bom=True)
     write_file(lpg_path, render(LPG_TEMPLATE, NAME=name), args.dry_run, args.force,
                validate_as_xml=True)
 
@@ -578,13 +589,13 @@ def cmd_add(args):
     unit_path = target_dir / ("%s.Core.pas" % name)
     define_prefix = inc_path.stem.upper()
     write_file(unit_path, render(STARTER_UNIT_TEMPLATE, NAME=name, INC_NAME=inc_path.stem),
-               args.dry_run, args.force)
-    write_file(dpr_path, render(DPR_TEMPLATE, NAME=name), args.dry_run, args.force)
+               args.dry_run, args.force, bom=True)
+    write_file(dpr_path, render(DPR_TEMPLATE, NAME=name), args.dry_run, args.force, bom=True)
 
     src_rel = to_win_path(os.path.relpath(inc_path.parent, target_dir))
     write_file(dproj_path,
                render(DPROJ_TEMPLATE, NAME=name, GUID=new_guid(), SRC_REL=src_rel),
-               args.dry_run, args.force, validate_as_xml=True)
+               args.dry_run, args.force, validate_as_xml=True, bom=True)
     write_file(lpi_path,
                render(LPI_TEMPLATE, NAME=name, REQUIRED_PACKAGES="",
                       SEARCH_PATHS=render(LPI_SEARCH_PATHS_NO_LPK, SRC_REL=src_rel)),
@@ -618,7 +629,10 @@ def cmd_add(args):
     )
 
     if groupproj_path.exists():
-        text = groupproj_path.read_text(encoding="utf-8")
+        # utf-8-sig strips a leading BOM on read if present (real .groupproj
+        # files have one -- see write_file's bom= docstring); write_file
+        # below re-adds it, so a self-generated file's BOM round-trips.
+        text = groupproj_path.read_text(encoding="utf-8-sig")
         new_text = insert_before_anchor(text, GROUPPROJ_ANCHOR, groupproj_snippet)
         new_text = insert_before_anchor(new_text, GROUPPROJ_TARGET_ANCHOR,
                                          target_snippet) if new_text else None
@@ -636,7 +650,7 @@ def cmd_add(args):
                         "Insert the project into it by hand." % (kind, groupproj_path)
                     )
             write_file(groupproj_path, new_text, args.dry_run, args.force or True,
-                       validate_as_xml=True)
+                       validate_as_xml=True, bom=True)
         else:
             print_manual_groupproj_instructions(groupproj_path, groupproj_snippet, target_snippet)
     else:

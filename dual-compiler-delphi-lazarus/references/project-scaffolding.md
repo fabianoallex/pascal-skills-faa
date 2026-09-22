@@ -126,3 +126,14 @@ fields in the table above. Generate a fresh GUID for `ProjectGuid` — don't
 copy one, Delphi gets confused by duplicate GUIDs across projects. Then
 apply the same IDE-verification caveat as above: open both projects once in
 their real IDEs before relying on them.
+
+**Keep the byte-order mark where Delphi puts one.** Inspecting real files:
+`.pas`, `.dpr`/`.lpr`, `.dproj`, and `.groupproj` all carry a UTF-8 BOM in
+every reference project — that's Delphi's own file-creation convention, and
+it's why `scripts/scaffold_dual_project.py` writes those four file types
+with a BOM. `.lpi`/`.lpg`/`.lpk` never have one (they declare
+`encoding="UTF-8"` in the XML prologue instead), and neither do `.inc`
+files. If you're copying a file by hand with a plain text editor, check
+your editor didn't silently strip or add a BOM — a `.pas` file without one
+is read as ANSI by Delphi, which only shows up as a bug once someone adds
+an accented character.
