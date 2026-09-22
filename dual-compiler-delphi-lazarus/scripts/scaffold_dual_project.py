@@ -28,21 +28,33 @@ USAGE
 New project, at the root of a fresh repo:
     python scaffold_dual_project.py new --name MyProject
 
-Add one more project (e.g. a second sample or tool) to an existing group:
+Add one more project (e.g. a second sample or tool), generating a starter
+console app for it, into an existing group:
     python scaffold_dual_project.py add --name MyTool \\
         --groupproj MyProject.groupproj --lpg MyProject.lpg \\
         --inc src/myproject.inc
 
-Both subcommands support --dry-run (print what would be written, write
-nothing) and refuse to overwrite an existing file unless --force is given.
+Wire an ALREADY-BUILT .dproj/.lpi pair into the group files, with no
+starter files generated -- use this for something you built by hand (e.g.
+a mirrored test runner copied from `tests/Unit/` in a reference repo, per
+the "test-runner-shaped target" note below):
+    python scaffold_dual_project.py register --name MyTests \\
+        --dproj tests/Unit/MyTests.dproj --lpi tests/Unit/fpc/MyTestsFpc.lpi \\
+        --groupproj MyProject.groupproj --lpg MyProject.lpg
 
-V1 SCOPE: a single shared `.dpr` console-app skeleton, following the real
-pattern found in `samples/Retaguarda` -- Delphi and FPC compile the SAME
-`.dpr` (no separate `.lpr`), because a plain console program doesn't need
-the GUI/console dual-mode branching that a DUnitX/FPCUnit test runner does.
-See references/project-scaffolding.md if you need a test-runner-shaped
-target instead (that one does need a separate `.lpr` -- copy the pattern
-from `tests/Unit/` in any of the reference repos).
+All three subcommands support --dry-run (print what would be written,
+write nothing) and refuse to overwrite an existing file unless --force is
+given.
+
+V1 SCOPE: `new`/`add` generate a single shared `.dpr` console-app skeleton,
+following the real pattern found in `samples/Retaguarda` -- Delphi and FPC
+compile the SAME `.dpr` (no separate `.lpr`), because a plain console
+program doesn't need the GUI/console dual-mode branching that a
+DUnitX/FPCUnit test runner does. See references/project-scaffolding.md if
+you need a test-runner-shaped or GUI (VCL/LCL) target instead -- copy the
+pattern from `tests/Unit/` in any of the reference repos (or the
+console-to-GUI conversion checklist for a VCL/LCL app), then use `register`
+to wire the result into the groups instead of `add`.
 """
 
 import argparse
@@ -54,9 +66,13 @@ import xml.dom.minidom as minidom
 from pathlib import Path
 
 IDE_VERIFICATION_NOTICE = (
-    "Generated files are unverified against a real IDE. Open {name}.dproj in "
-    "Delphi and {name}.lpi in Lazarus once each and confirm they load and "
-    "build before relying on this skeleton."
+    "The plain console template this generates has been verified end-to-end "
+    "in real Delphi/Lazarus IDEs (see references/project-scaffolding.md) -- "
+    "but that covers this exact template, not every project type or any "
+    "hand-edit made afterward (e.g. converting to a VCL/LCL GUI app). Open "
+    "{name}.dproj in Delphi and {name}.lpi in Lazarus once each and confirm "
+    "they still load and build before relying on this skeleton, especially "
+    "after changing anything."
 )
 
 GROUPPROJ_ANCHOR = "<!-- SCAFFOLD:PROJECTS -->"
@@ -560,47 +576,35 @@ def cmd_new(args):
 
 
 def insert_before_anchor(text, anchor, insertion):
-    if anchor not in text:
+    """Insert `insertion` right before `anchor`, reusing the anchor's own
+    line indentation for where the anchor ends up afterward.
+
+    `insertion`'s own lines already carry the correct fixed indentation for
+    where they land (see the *_snippet strings below) -- the bug this
+    guards against is adding a SECOND copy of that indentation on top of
+    whatever indentation already precedes the anchor in the template.
+    Different anchors sit at different depths (8 spaces for the .groupproj
+    <ItemGroup> entries, 4 for its <Target> blocks, 6 for the .lpg's
+    <Target>), so a single hardcoded indent for repositioning the anchor
+    doesn't fit all of them -- capture it from the text instead of guessing.
+    """
+    idx = text.find(anchor)
+    if idx < 0:
         return None
-    return text.replace(anchor, insertion + "\n    " + anchor, 1)
+    line_start = text.rfind("\n", 0, idx) + 1
+    indent = text[line_start:idx]
+    return text[:line_start] + insertion + "\n" + indent + anchor + text[idx + len(anchor):]
 
 
-def cmd_add(args):
-    name = args.name
-    # Resolve every incoming path up front and consistently. Mixing a
-    # resolved path (which Windows normalizes 8.3 short names like
-    # FABIAN~1.ARN into their long form) with an unresolved one in the same
-    # os.path.relpath() call produces a bogus, wildly-long ../../.. path,
-    # since relpath compares path components as text, not by identity.
-    groupproj_path = Path(args.groupproj).resolve()
-    lpg_path = Path(args.lpg).resolve()
-    inc_path = Path(args.inc).resolve()
+def register_into_groups(name, dproj_path, lpi_path, groupproj_path, lpg_path, dry_run, force):
+    """Insert an ALREADY-EXISTING dproj/lpi pair into a .groupproj/.lpg.
 
-    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", name):
-        raise SystemExit("Project name must be a valid Pascal identifier: %r" % name)
-
-    target_dir = Path(args.dir).resolve() if args.dir else Path.cwd()
-    check_name_collision(groupproj_path.parent, name)
-
-    dpr_path = target_dir / ("%s.dpr" % name)
-    dproj_path = target_dir / ("%s.dproj" % name)
-    lpi_path = target_dir / ("%s.lpi" % name)
-
-    unit_path = target_dir / ("%s.Core.pas" % name)
-    define_prefix = inc_path.stem.upper()
-    write_file(unit_path, render(STARTER_UNIT_TEMPLATE, NAME=name, INC_NAME=inc_path.stem),
-               args.dry_run, args.force, bom=True)
-    write_file(dpr_path, render(DPR_TEMPLATE, NAME=name), args.dry_run, args.force, bom=True)
-
-    src_rel = to_win_path(os.path.relpath(inc_path.parent, target_dir))
-    write_file(dproj_path,
-               render(DPROJ_TEMPLATE, NAME=name, GUID=new_guid(), SRC_REL=src_rel),
-               args.dry_run, args.force, validate_as_xml=True, bom=True)
-    write_file(lpi_path,
-               render(LPI_TEMPLATE, NAME=name, REQUIRED_PACKAGES="",
-                      SEARCH_PATHS=render(LPI_SEARCH_PATHS_NO_LPK, SRC_REL=src_rel)),
-               args.dry_run, args.force, validate_as_xml=True)
-
+    Shared by `add` (which generates the dproj/lpi first, then calls this)
+    and `register` (which takes dproj/lpi paths the caller already built by
+    hand -- e.g. following the "copy the test-runner pattern from
+    tests/Unit/" recipe in references/project-scaffolding.md -- and only
+    needs the group-file wiring, not a throwaway starter project).
+    """
     dproj_rel = to_win_path(os.path.relpath(dproj_path, groupproj_path.parent))
     lpi_rel = to_win_path(os.path.relpath(lpi_path, lpg_path.parent))
 
@@ -649,7 +653,7 @@ def cmd_add(args):
                         "<Target Name=\"%s\"> block to extend -- not touching %s. "
                         "Insert the project into it by hand." % (kind, groupproj_path)
                     )
-            write_file(groupproj_path, new_text, args.dry_run, args.force or True,
+            write_file(groupproj_path, new_text, dry_run, force or True,
                        validate_as_xml=True, bom=True)
         else:
             print_manual_groupproj_instructions(groupproj_path, groupproj_snippet, target_snippet)
@@ -660,15 +664,78 @@ def cmd_add(args):
         text = lpg_path.read_text(encoding="utf-8")
         new_text = insert_before_anchor(text, LPG_ANCHOR, lpg_snippet)
         if new_text:
-            write_file(lpg_path, new_text, args.dry_run, args.force or True,
+            write_file(lpg_path, new_text, dry_run, force or True,
                        validate_as_xml=True)
         else:
             print_manual_lpg_instructions(lpg_path, lpg_snippet)
     else:
         print_manual_lpg_instructions(lpg_path, lpg_snippet)
 
+
+def cmd_add(args):
+    name = args.name
+    # Resolve every incoming path up front and consistently. Mixing a
+    # resolved path (which Windows normalizes 8.3 short names like
+    # FABIAN~1.ARN into their long form) with an unresolved one in the same
+    # os.path.relpath() call produces a bogus, wildly-long ../../.. path,
+    # since relpath compares path components as text, not by identity.
+    groupproj_path = Path(args.groupproj).resolve()
+    lpg_path = Path(args.lpg).resolve()
+    inc_path = Path(args.inc).resolve()
+
+    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", name):
+        raise SystemExit("Project name must be a valid Pascal identifier: %r" % name)
+
+    target_dir = Path(args.dir).resolve() if args.dir else Path.cwd()
+    check_name_collision(groupproj_path.parent, name)
+
+    dpr_path = target_dir / ("%s.dpr" % name)
+    dproj_path = target_dir / ("%s.dproj" % name)
+    lpi_path = target_dir / ("%s.lpi" % name)
+
+    unit_path = target_dir / ("%s.Core.pas" % name)
+    write_file(unit_path, render(STARTER_UNIT_TEMPLATE, NAME=name, INC_NAME=inc_path.stem),
+               args.dry_run, args.force, bom=True)
+    write_file(dpr_path, render(DPR_TEMPLATE, NAME=name), args.dry_run, args.force, bom=True)
+
+    src_rel = to_win_path(os.path.relpath(inc_path.parent, target_dir))
+    write_file(dproj_path,
+               render(DPROJ_TEMPLATE, NAME=name, GUID=new_guid(), SRC_REL=src_rel),
+               args.dry_run, args.force, validate_as_xml=True, bom=True)
+    write_file(lpi_path,
+               render(LPI_TEMPLATE, NAME=name, REQUIRED_PACKAGES="",
+                      SEARCH_PATHS=render(LPI_SEARCH_PATHS_NO_LPK, SRC_REL=src_rel)),
+               args.dry_run, args.force, validate_as_xml=True)
+
+    register_into_groups(name, dproj_path, lpi_path, groupproj_path, lpg_path,
+                          args.dry_run, args.force)
+
     if not args.dry_run:
         print("\n" + IDE_VERIFICATION_NOTICE.format(name=name))
+
+
+def cmd_register(args):
+    """Wire an ALREADY-EXISTING dproj/lpi pair into the group files, with no
+    starter unit/.dpr generated. Use this for a project you built by hand
+    following a recipe (e.g. a mirrored test runner copied from
+    tests/Unit/ in a reference repo, per references/project-scaffolding.md)
+    -- `add` always generates a throwaway console starter first, which is
+    wasted work (and had to be discarded) for that case."""
+    name = args.name
+    dproj_path = Path(args.dproj).resolve()
+    lpi_path = Path(args.lpi).resolve()
+    groupproj_path = Path(args.groupproj).resolve()
+    lpg_path = Path(args.lpg).resolve()
+
+    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", name):
+        raise SystemExit("Project name must be a valid Pascal identifier: %r" % name)
+    if not dproj_path.exists():
+        raise SystemExit("--dproj not found: %s" % dproj_path)
+    if not lpi_path.exists():
+        raise SystemExit("--lpi not found: %s" % lpi_path)
+
+    register_into_groups(name, dproj_path, lpi_path, groupproj_path, lpg_path,
+                          args.dry_run, args.force)
 
 
 def print_manual_groupproj_instructions(path, projects_snippet, target_snippet):
@@ -722,6 +789,20 @@ def build_parser():
     p_add.add_argument("--dry-run", action="store_true", help="Print what would be written, write nothing")
     p_add.add_argument("--force", action="store_true", help="Overwrite existing new-project files")
     p_add.set_defaults(func=cmd_add)
+
+    p_reg = sub.add_parser("register",
+                            help="Wire an already-existing .dproj/.lpi pair into the group files "
+                                 "(no starter unit/.dpr generated)")
+    p_reg.add_argument("--name", required=True,
+                        help="Target name used for the <Target Name=\"...\"> entries "
+                             "(a valid Pascal identifier)")
+    p_reg.add_argument("--dproj", required=True, help="Path to the existing .dproj")
+    p_reg.add_argument("--lpi", required=True, help="Path to the existing .lpi")
+    p_reg.add_argument("--groupproj", required=True, help="Path to the existing .groupproj to update")
+    p_reg.add_argument("--lpg", required=True, help="Path to the existing .lpg to update")
+    p_reg.add_argument("--dry-run", action="store_true", help="Print what would be written, write nothing")
+    p_reg.add_argument("--force", action="store_true", help="Overwrite existing group files' backups, if any")
+    p_reg.set_defaults(func=cmd_register)
 
     return p
 

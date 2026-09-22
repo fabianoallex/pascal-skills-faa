@@ -20,12 +20,20 @@ cleanly in both real IDEs — no "repair project" prompt in Delphi, no
 migration prompt in Lazarus — and both built and ran the console app
 correctly (`DemoApp.exe` printed the expected greeting from both the
 Delphi `Win32\Debug\` output and the Lazarus/FPC output at the project
-root). That round-trip covers the plain console-app case this script
-targets; it hasn't been re-verified for every `--with-lpk`/`add` combination
-or every Delphi/Lazarus version. Open a freshly generated `.dproj` in Delphi
-and `.lpi` in Lazarus once each and confirm they load and build before
-relying on the skeleton for real work — especially after changing anything
-in the templates.
+root). `add`'s output got the same confirmation separately, in a different
+project ([`pascal-snake`](https://github.com/fabianoallex/pascal-snake), Delphi
+12 CE + Lazarus 4.0): after opening the group and building both sides,
+`git status` showed **no modification** to the generated `.dproj` or
+`.groupproj` — Delphi accepted the generated project file completely
+unchanged. That covers the plain console-app template `new`/`add` generate;
+it hasn't been re-verified for every `--with-lpk` combination or every
+Delphi/Lazarus version, and it does NOT cover any hand-edit made afterward
+(e.g. converting a console `.dproj` to a VCL app — see the conversion
+checklist below, which is explicitly unverified against a real IDE build).
+Open a freshly generated or hand-modified `.dproj` in Delphi and `.lpi` in
+Lazarus once each and confirm they load and build before relying on the
+result for real work — especially after changing anything in the
+templates or hand-editing the output.
 
 ## A real discovery worth knowing: you often don't need a separate `.lpr`
 
@@ -64,20 +72,42 @@ python scripts/scaffold_dual_project.py add --name MyTool \
     --inc src/myproject.inc
 ```
 
-Both subcommands take `--dry-run` (print what would be written, write
+Wire an **already-built** `.dproj`/`.lpi` pair into the groups — e.g. a
+mirrored test runner you copied from `tests/Unit/` in a reference repo by
+hand, per the note above, or a project you hand-converted using the
+conversion checklist below — with no throwaway starter files:
+
+```
+python scripts/scaffold_dual_project.py register --name MyTests \
+    --dproj tests/Unit/MyTests.dproj --lpi tests/Unit/fpc/MyTestsFpc.lpi \
+    --groupproj MyProject.groupproj --lpg MyProject.lpg
+```
+
+All three subcommands take `--dry-run` (print what would be written, write
 nothing) and require `--force` to overwrite an existing file.
 
-`add` looks for `<!-- SCAFFOLD:... -->` anchor comments that `new` leaves in
-the `.groupproj`/`.lpg` it generates. If the target group file has them
-(i.e. it was itself produced by this script), the new project is inserted
-automatically. If it doesn't — the common case, since your project group is
-usually a real, hand-authored file like the ones in the 5 reference repos —
-`add` **does not modify the file**. It prints the exact XML snippet to
-insert and where, matching the "every new `.dpr`/`.dproj` goes into the
-`.groupproj`, every new `.lpi` goes into the `.lpg`" rule from the main
-`SKILL.md`. This is deliberate: text-editing a hand-authored MSBuild/Lazarus
-XML file by pattern-matching is fragile, and a wrong edit is worse than a
-manual step.
+`add` and `register` both look for `<!-- SCAFFOLD:... -->` anchor comments
+that `new` leaves in the `.groupproj`/`.lpg` it generates. If the target
+group file has them (i.e. it was itself produced by this script), the
+project is inserted automatically. If it doesn't — the common case, since
+your project group is usually a real, hand-authored file like the ones in
+the 5 reference repos — nothing is modified. Instead, the exact XML snippet
+to insert and where is printed, matching the "every new `.dpr`/`.dproj`
+goes into the `.groupproj`, every new `.lpi` goes into the `.lpg`" rule from
+the main `SKILL.md`. This is deliberate: text-editing a hand-authored
+MSBuild/Lazarus XML file by pattern-matching is fragile, and a wrong edit is
+worse than a manual step.
+
+**Use `register`, not `add`, once you already have a `.dproj`/`.lpi` pair.**
+`add` always generates a starter unit and a console `.dpr` first — useful
+when you want a new project from scratch, wasted work when you already built
+the files by hand (confirmed the hard way while scaffolding `pascal-snake`'s
+test runner: the generated starter had to be deleted, and because the
+FPC-side `.lpi` lived at a different path/name than the Delphi-side `.dproj`
+— `tests/Unit/fpc/MyTestsFpc.lpi` next to `tests/Unit/MyTests.dproj` — `add`
+registered the wrong `.lpi` into the `.lpg` and it had to be fixed by hand).
+`register` takes the paths you already have and only does the group-file
+wiring.
 
 ### `--with-lpk`
 
@@ -92,8 +122,9 @@ itself a dependency of something else.
 
 - **Console app only.** A GUI-forms project (VCL/LCL/FMX) has enough
   additional per-framework structure (forms, resources, framework-specific
-  units) that it doesn't fit this script's templates — see
-  `opcb-object-pascal-component-builder` for how that project structures
+  units) that it doesn't fit this script's templates — see the conversion
+  checklist below for converting the generated console skeleton by hand,
+  or `opcb-object-pascal-component-builder` for how that project structures
   VCL/FMX/LCL examples instead.
 - **Plain identifiers only, no dots.** Some of the reference repos name
   projects like `AMQP.UnitTests` (dotted, unit-scope style). The script
@@ -104,6 +135,55 @@ itself a dependency of something else.
 - The naming-collision gotcha from `SKILL.md` ("Naming" section) is
   enforced: `new`/`add` refuse if `--name` collides with an existing unit
   under `src/`.
+
+## Console → VCL/LCL conversion checklist
+
+There's no `--gui` mode yet (see "v1 scope" above) — building a GUI project
+today means generating the console skeleton with `new`, then converting it
+by hand. This checklist is the concrete set of changes one real conversion
+needed, converting a `new`-generated console skeleton into a VCL/LCL game
+([`pascal-snake`](https://github.com/fabianoallex/pascal-snake)). It's a
+report of what one project needed, not a verified-complete recipe — treat
+it as a strong starting point, and re-verify by opening both projects in
+their real IDEs, same as everywhere else in this document.
+
+**`.dproj`:**
+- `FrameworkType`: `None` → `VCL`
+- `AppType`: `Console` → `Application`
+- Append to `DCC_Namespace`: `Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell`
+  (needed for the short-name `uses Forms, Controls, ...` style VCL code
+  normally uses)
+- Add `Manifest_File`, `AppDPIAwarenessMode=PerMonitorV2`, and
+  `AppEnableRuntimeThemes` (DPI-awareness and theming, which a console app
+  has no use for)
+- Add a `<DCCReference Include="...">` entry per unit. The console template
+  emits none, relying entirely on `DCC_UnitSearchPath` — that's enough for
+  the compiler, but a GUI project's units are more naturally something the
+  IDE's Project Manager should list explicitly (this hasn't been confirmed
+  as strictly *required* for compilation, only as what a real hand-converted
+  project ended up with)
+
+**`.lpi`:**
+- Add `LCL` to `RequiredPackages`
+- Add `Scaled` (see `references/forms-dfm-lfm.md`'s DPI-scaling section if
+  the form is built via `CreateNew` rather than a `.lfm`)
+- Add an `XPManifest` with `DpiAware`
+- Add `GraphicApplication` (the Lazarus equivalent of `AppType=Application`)
+
+**Also needed a separate `.lpr`** (rather than reusing the shared console
+`.dpr`) — a GUI entry point calls `Application.Initialize`/
+`CreateForm`/`Run`, which isn't something Delphi and FPC can share via one
+file the way the plain console template does. **Give it a different program
+name than the `.dpr`** if they'd otherwise share one — see the `.res`
+collision gotcha in `SKILL.md`'s "Project files and groups" and in
+`references/rtl-gotchas.md`'s "Resource files" section; keep the built
+executable's name the same via `<Target><Filename Value="..."/></Target>`
+in the `.lpi`.
+
+**Register, don't `add`, the result.** Once the `.dproj`/`.lpi` exist (converted
+or hand-written), use `register` (see Usage above) to wire them into the
+groups — `add` would generate a redundant console starter on top of what
+you already have.
 
 ## Manual recipe (if you'd rather not run the script)
 

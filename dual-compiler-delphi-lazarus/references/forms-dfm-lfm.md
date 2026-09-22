@@ -170,6 +170,17 @@ end;
 concrete proof: the exact same `.pas` file, no `.dfm`/`.lfm` at all,
 compiles and runs unmodified under both Delphi and Lazarus.
 
+A full `git clone` of that repo can fail on Windows with a `Filename too
+long` error — some of its VCL example paths are deep enough to exceed
+Windows's default path-length limit (e.g.
+`examples/Builders/VCL/exemplo-classes-personalizadas/OPCB.Vcl.Exemplo
+ClassesPersonalizadas.dproj`). Either clone with
+`git clone -c core.longpaths=true ...`, or skip cloning the whole repo and
+just open the specific files needed directly on GitHub — `UMainForm.pas`,
+`LazarusProject.lpr`, and `LazarusProject.lpi` under
+`examples/Builders/VCL-Lazarus/no-dfm/` are all this pattern actually
+requires.
+
 **This doesn't require going all-or-nothing.** `examples/Builders/Lazarus/
 schema-driven-ui/unit1.lfm` shows a hybrid: static chrome (a toolbar panel,
 menu) is still laid out in the normal `.lfm`, and only the part whose shape
@@ -177,6 +188,14 @@ is inherently dynamic (schema-driven form fields) is built at runtime via
 `TControlCreator` inside that panel. The pattern scales down to "avoid the
 designer only for the parts that would otherwise need manual per-compiler
 resync," not "rewrite every form as code."
+
+## A consequence of skipping form files: DPI scaling becomes your job
+
+A `CreateNew` form has no `.lfm` for the LCL to read a `DesignTimePPI` from — which means there's no per-form DPI record for `Application.Scaled` to reconcile against, and if the code also does its own DPI-aware sizing, the two can stack.
+
+Confirmed building [`pascal-snake`](https://github.com/fabianoallex/pascal-snake) (a `CreateNew`-based LCL game board, drawn pixel-by-pixel into a `TBitmap`, so its control sizes are computed in real device pixels via `MulDiv(BaseSize, Screen.PixelsPerInch, 96)`): on a 125%-scaled display, the window came out roughly 25% larger than the board itself — an empty band on the right and bottom, an oversized status panel — while Delphi (with `AppDPIAwarenessMode=PerMonitorV2`) rendered the same code correctly. The cause: `Application.Scaled := True` (the LCL default) scales the *whole form* a second time, on top of the sizes the code already computed in real pixels. It compiled cleanly on both sides; only a screenshot of the running app caught it.
+
+Fix: call `Scaled := False` in the form's constructor, before any sizing code runs (`TSnakeForm`'s constructor in that project). More generally: either size everything in 96-dpi logical units and let `Scaled` do the one scaling pass the LCL expects, or compute real-pixel sizes yourself (typical for anything hand-drawn, like a custom-rendered board or a canvas) and set `Scaled := False` so the LCL doesn't scale on top of that. Mixing the two — some sizes left logical, others already DPI-adjusted, with `Scaled` still on — scales part of the form twice. Worth checking any code-built form on a non-100%-scaled display specifically; it compiles fine and looks fine on a standard-DPI monitor either way.
 
 ## Recommendation
 
