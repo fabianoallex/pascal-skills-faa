@@ -2,6 +2,14 @@
 
 Reusable [Claude Code](https://docs.claude.com/en/docs/claude-code) skills for Object Pascal work — starting with everything needed to build and maintain Delphi/Lazarus **dual-compiler** projects.
 
+## How this skill approaches things
+
+A skill is instructions and context Claude loads when a task matches — not a black box, and not a rulebook to obey blindly. Three things this one deliberately does because of that:
+
+- **Nothing is a black box.** Every claim links to real, inspectable code in one of the reference repos below, and the reasoning is written down, not just the instruction — you can check the "why" yourself before trusting it, and Claude can point you at the exact line it's acting on.
+- **Trade-offs are stated, not hidden behind a single answer.** Where more than one approach is genuinely valid — `{$MODE DELPHI}` vs `{$mode objfpc}`, relying on `.dfm`/`.lfm` vs building UI in code — the skill lays out both with their real cost, instead of picking a winner for you. Your project's context decides which one fits.
+- **It's meant to be adapted, not followed as-is.** The skill separates what's a universal dual-compiler pattern from what's one project's own choice (see its "What NOT to generalize" section) specifically so you know what to keep and what to fork and change for your own project.
+
 ## What the skill does
 
 The flagship skill, `dual-compiler-delphi-lazarus`, hands Claude everything it needs to work on a Pascal codebase that has to compile on both Delphi and Lazarus/FPC:
