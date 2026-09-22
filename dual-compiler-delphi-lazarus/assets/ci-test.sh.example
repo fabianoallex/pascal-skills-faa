@@ -1,0 +1,29 @@
+#!/bin/sh
+# Example only -- copy this to tools/ci-test.sh in your project, make it
+# executable, and edit every marked section. Never wired up automatically:
+# assets/github-actions-fpc-linux.yml calls tools/ci-test.sh, which won't
+# exist until you deliberately put it there.
+#
+# Shows the shape referenced by the "CI: keep the YAML thin" section of the
+# dual-compiler-delphi-lazarus skill: install FPC, build with lazbuild,
+# run the compiled FPCUnit test binaries, then check the DUnitX/FPCUnit
+# mirrors haven't drifted apart.
+
+set -eu
+
+# 1. Install FPC/Lazarus. Version-pin this in a real project -- exact
+#    package name/version depends on your distro base image.
+apt-get update
+apt-get install -y fpc lazarus
+
+# 2. Force a clean rebuild -- lazbuild can otherwise reuse a stale .ppu and
+#    mask a real change (see the "Building with lazbuild" section of SKILL.md).
+lazbuild -B -r YourProject.lpg
+
+# 3. Run the compiled FPCUnit test binary/binaries. Adjust the path(s) to
+#    match your project's test-runner target(s).
+./tests/Unit/fpc/lib/x86_64-linux/YourProjectUnitTestsFpc --all --format=plain
+
+# 4. Check the DUnitX/FPCUnit mirrors haven't drifted apart. See
+#    references/test-mirror-verification.md for what this checks.
+python3 scripts/verify_test_mirrors.py --root . --dirs tests

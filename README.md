@@ -9,6 +9,7 @@ The flagship skill, `dual-compiler-delphi-lazarus`, hands Claude everything it n
 - **How to lay out a new dual-compiler project** — one shared `src/` tree, the `.inc` compatibility-file pattern, `{$MODE DELPHI}` vs `{$mode objfpc}`, `.dpr`/`.dproj`/`.lpr`/`.lpi`/`.lpk` project files, encoding, line endings.
 - **What actually breaks between the two RTLs** — a catalog of real Delphi/FPC divergences (threading, sockets, encoding, memory, types...), each with the symptom, the root cause, and the fix that was used, so Claude isn't guessing.
 - **How to keep both compilers honestly tested** — the mirrored DUnitX (Delphi) + FPCUnit (FPC) pattern, why both matter for memory-leak detection, and the sharp edges around Delphi Community Edition not building from the command line.
+- **Scaffolding and verification tooling** — `scripts/scaffold_dual_project.py` generates the skeleton of a new dual-compiler project (`.inc`, starter unit, `.dpr`/`.dproj` + `.lpi`, project groups); `scripts/verify_test_mirrors.py` statically checks that DUnitX/FPCUnit test mirrors stay in sync; `assets/github-actions-fpc-linux.yml` is a copyable CI starting point for the FPC/Linux side.
 
 It triggers automatically whenever the conversation touches this territory — starting a new dual-compiler project, porting one from a single compiler, or debugging something that only fails on one side — without needing to say "use the skill" explicitly.
 
@@ -16,7 +17,7 @@ It triggers automatically whenever the conversation touches this territory — s
 
 | Skill | What it covers |
 |---|---|
-| [`dual-compiler-delphi-lazarus`](dual-compiler-delphi-lazarus/SKILL.md) | Everything described above, plus a full reference catalog in [`references/rtl-gotchas.md`](dual-compiler-delphi-lazarus/references/rtl-gotchas.md) |
+| [`dual-compiler-delphi-lazarus`](dual-compiler-delphi-lazarus/SKILL.md) | Everything described above, plus full reference docs in [`references/`](dual-compiler-delphi-lazarus/references/) and runnable tooling in [`scripts/`](dual-compiler-delphi-lazarus/scripts/) and [`assets/`](dual-compiler-delphi-lazarus/assets/) |
 
 More skills will land here as they get extracted from ongoing work — refactoring patterns, packaging/build tooling, component-library conventions, etc.
 
