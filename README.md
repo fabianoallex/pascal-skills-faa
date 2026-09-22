@@ -58,6 +58,18 @@ The `dual-compiler-delphi-lazarus` skill isn't theoretical — it's distilled fr
 
 When the skill references a pattern or a gotcha, it links to the actual file in one of these repos rather than duplicating the code — so the example stays live instead of drifting out of date.
 
+## Versions tested
+
+Everything here was verified against one specific toolchain, not "Delphi" and "Lazarus" as abstractions:
+
+| | Version |
+|---|---|
+| Delphi | 12, **Community Edition**, Windows |
+| Free Pascal (FPC) | 3.2.2 |
+| Lazarus/LCL | 2.2.6 |
+
+Older Delphi versions in particular may diverge from what's documented here — none of it has been checked against them, and some of the RTL/generics/anonymous-method gotchas are exactly the kind of thing that could differ by version. If you hit a divergence on a different version (an older Delphi release, an FPC 3.3.x/trunk build, a newer Lazarus), that's genuinely useful, not noise — see [Contributing](#contributing) below.
+
 ## Using the skill
 
 Drop (or symlink) the skill folder into a project's `.claude/skills/` directory, or into your personal `~/.claude/skills/`, and Claude Code will pick it up automatically whenever the conversation touches dual-compiler Delphi/Lazarus work — starting a new dual-compiler project, porting an existing one, or debugging a compiler-specific bug.
@@ -65,3 +77,5 @@ Drop (or symlink) the skill folder into a project's `.claude/skills/` directory,
 ## Contributing
 
 Found a Delphi/FPC divergence that isn't in `references/rtl-gotchas.md` yet? PRs and issues are welcome — the format is symptom → root cause → fix, with a link to where it was found. That's exactly how the list grew inside the original projects, and how it'll keep growing here.
+
+This especially includes **version-specific findings**: something that behaves differently on a Delphi version other than 12 CE, or on an FPC/Lazarus version other than 3.2.2/2.2.6 (see [Versions tested](#versions-tested) above). One author on one machine can't catch that kind of divergence alone — say which version it applies to, and it'll get noted as such rather than presented as universal.
