@@ -58,6 +58,18 @@ The `dual-compiler-delphi-lazarus` skill isn't theoretical — it's distilled fr
 
 When the skill references a pattern or a gotcha, it links to the actual file in one of these repos rather than duplicating the code — so the example stays live instead of drifting out of date.
 
+## Testing the skill on fresh scenarios
+
+Besides the 5 reference projects the skill is distilled from, it's also exercised end-to-end the way an outside user would encounter it: a new session, in an empty folder, pointed only at this repo's GitHub URL, given a plausible task with no mention that it's a test — then asked afterward for unvarnished feedback on what the skill actually helped with versus what was missing. The goal is to catch gaps that don't show up just from reading the skill, only from someone unfamiliar with it trying to use it under a real (if small) task.
+
+| Project | Task given | What came out of it |
+|---|---|---|
+| [`pascal-skills-threads`](https://github.com/fabianoallex/pascal-skills-threads) | "Build an app that downloads several files at once using threads, compiling on both Delphi and Lazarus." | A working dual-compiler console app (10/10 unit tests passing on both compilers, confirmed build+run on Delphi 11 and FPC 3.2.2). The honest feedback afterward (see [`SKILL-FEEDBACK.md`](https://github.com/fabianoallex/pascal-skills-threads/blob/main/SKILL-FEEDBACK.md) in that repo) surfaced 3 real documentation gaps, since fixed here: no coverage of `TThread.Synchronize`/`.Queue` silently doing nothing in a console app with no message loop, no worked example of a worker pool beyond "don't use `TTask.Run`" (see `references/threading-worker-pool.md`), and no guidance on choosing a dual-compiler HTTP client (Indy isn't enabled by default in Lazarus, `fphttpclient` is FPC-only). |
+
+More scenarios will be added here as they're tried.
+
+**A caveat on how to read this table**: the "what came out of it" feedback is self-reported by the same agent session that did the task, asked afterward what it would or wouldn't have known *without* the skill. That's an introspective judgment about a counterfactual, not a measured one — once a session has read the skill, it's genuinely hard (for a model, same as for a person) to cleanly separate "I already knew this" from "I just learned this." Some of the claims above hold up under scrutiny (e.g. the HTTP-client gap and the FPCUnit `RequiredPackages` gap both describe actual exploration/trial-and-error, not just a hunch), while others are weaker — the `Synchronize`/message-loop point, for instance, is general Delphi threading knowledge the same session caught and avoided on its own before it became a real mistake, which is a smaller gap than "cost me" framing suggests. Treat this table as a useful source of candidate documentation gaps, not as proof the skill changed the outcome. The rigorous version of this test — running the same task twice, once with the skill available and once without, and comparing the two actual results — hasn't been done yet; that's the next real step if the goal is to *measure* the skill's effect rather than collect plausible-sounding feedback about it.
+
 ## Versions tested
 
 Everything here was verified against one specific toolchain, not "Delphi" and "Lazarus" as abstractions:
