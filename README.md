@@ -22,7 +22,7 @@ The flagship skill, `dual-compiler-delphi-lazarus`, hands Claude everything it n
 - **Native library interop on Linux** — OpenSSL 3.0's default provider not being active by default (breaks certificate/PKCS12 loading on Debian 12/Ubuntu 22.04), FPU exceptions native C libraries trip that FPC leaves unmasked, and a handful of other Linux-only gotchas around OpenSSL/libxml2 that never show up testing on Windows.
 - **Running unattended as a background service** — keeping one shared, testable core and wrapping it in two thin, deliberately single-platform hosts: a dual-compiler console host under systemd on Linux, and a Delphi-only `TService` Windows Service, plus the real gotchas specific to the Windows Service wrapper (can't block in `OnStart`, working directory is `System32`, doesn't see the interactive user's `PATH`).
 
-It triggers automatically whenever the conversation touches this territory — starting a new dual-compiler project, porting one from a single compiler, or debugging something that only fails on one side — without needing to say "use the skill" explicitly.
+It triggers automatically whenever the conversation touches this territory — starting a new dual-compiler project, or debugging something that only fails on one side — without needing to say "use the skill" explicitly.
 
 ## What's here
 
@@ -85,7 +85,7 @@ Older Delphi versions in particular may diverge from what's documented here — 
 
 ## Using the skill
 
-Drop (or symlink) the skill folder into a project's `.claude/skills/` directory, or into your personal `~/.claude/skills/`, and Claude Code will pick it up automatically whenever the conversation touches dual-compiler Delphi/Lazarus work — starting a new dual-compiler project, porting an existing one, or debugging a compiler-specific bug.
+Drop (or symlink) the skill folder into a project's `.claude/skills/` directory, or into your personal `~/.claude/skills/`, and Claude Code will pick it up automatically whenever the conversation touches dual-compiler Delphi/Lazarus work — starting a new dual-compiler project or debugging a compiler-specific bug. Porting an existing single-compiler codebase is deliberately not a goal: every project has its own particulars, so the skill's gotcha catalog can help there, but it makes no promise about it.
 
 ## Contributing
 
