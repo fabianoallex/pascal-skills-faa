@@ -35,7 +35,7 @@ With a paid Delphi edition, `COMPILERS=fpc,delphi python run_probes.py` builds b
 
 - `fpc-3.2.2-win64.txt`: `run_probes.py`.
 - `delphi-12-ce-win32.txt` / `delphi-12-ce-win64.txt`: the `gen_delphi.py` combined runner.
-- `delphi-12-ce-win32-standalone.txt`: every probe built on its own through `RttiProbes.groupproj`. It covers the probes the runner skips (`p20`, `p24`, `p29`) and matches the runner on everything else, apart from object addresses and how `p16`'s uncaught exception is printed.
+- `delphi-12-ce-win32-standalone.txt` / `delphi-12-ce-win64-standalone.txt`: every probe built on its own through `RttiProbes.groupproj`. It covers the probes the runner skips (`p20`, `p24`, `p29`) and matches the runner on everything else, apart from object addresses and how `p16`'s uncaught exception is printed. Win32 and Win64 differ only in addresses and in the inherited `TObject` method count (36 vs 39).
 
 Compile failures don't appear in any output file: `p02_proptype_fpc_style` gives E2010 and `p18_enum_explicit_values` gives E2134 on Delphi, as recorded in `rtti-gotchas.md`.
 
