@@ -11,7 +11,7 @@ What genuinely works the same on both sides:
 - **Classic `TypInfo` on `published` properties** (`{$M+}` / `TPersistent`): `GetPropList`, `GetPropInfo`, `Get/SetStrProp`, `Get/SetOrdProp`, `Get/SetEnumProp`, `Get/SetSetProp`, `Get/SetInt64Prop`, `Get/SetFloatProp`, `GetEnumName`/`GetEnumValue`, `IsPublishedProp`.
 - **`TRttiContext.GetType` + `GetProperties`/`GetProperty` + `GetValue`/`SetValue`** — but only for `published` properties (see below).
 - **Interface method RTTI under `{$M+}`**: method names, parameter names/types, return type, **`TRttiMethod.Invoke` through an interface `TValue`** (native on Win64, no libffi needed), and **`TVirtualInterface`** (handler `Args` includes `Self` on both: 3 args for `Add(A, B)`).
-- **`TValue` core**: implicit from Integer/string/Boolean, `TValue.From<T>`, `TValue.Make`, `ExtractRawData`, `IsType<T>`, `Empty`/`IsEmpty`, `IsArray`/`GetArrayLength`/`GetArrayElement`; `AsInteger`/`AsString` raise `EInvalidCast` on the wrong kind on both.
+- **`TValue` core**: implicit from Integer/string/Boolean, `TValue.From<T>`, `TValue.Make`, `ExtractRawData`, `IsType<T>`, `Empty`/`IsEmpty`, `IsArray`/`GetArrayLength`/`GetArrayElement` (but an array of `TValue`s returns wrapped elements on FPC, see "Real cases" below); `AsInteger`/`AsString` raise `EInvalidCast` on the wrong kind on both.
 - **`TRttiInstanceType`**: `Name`, `DeclaringUnitName`, `MetaclassType`, `BaseType`, `IsInstance`, `IsManaged`, `TypeKind`; `GetTypeData(...)^.UnitName` / `ClassType`.
 
 Design rule that falls out of this: **everything RTTI must see is `published`, or lives on a `{$M+}` interface.** Field-, attribute- and class-method-driven designs (Delphi 2010+ style) are Delphi-only on FPC 3.2.2.
@@ -106,6 +106,33 @@ Root cause for `ToString`: FPC 3.2.2's `TValue.ToString` is a `case Kind of` cov
 
 The type-name rows matter for anything that maps by type name (JSON/ORM converters keyed on `'Integer'`, `'string'`): key on `PTypeInfo`/`TTypeKind`, not on `Name`.
 
+## Real cases: `TValue` in production code on FPC 3.2.2
+
+The sections above map the API. The cases below are what actually hurt in a real codebase. `pascal-amqp-faa` models AMQP field-values (`TAMQPFieldTable`) with `TValue`, and paid for it on FPC. Same format as `rtl-gotchas.md`: symptom → root cause → fix.
+
+- **`TValue` nested in a `TValue` isn't collapsed on FPC.** Symptom: `GetArrayElement` on a `TValue` holding a `TArray<TValue>` returns the element **wrapped**: `Kind = tkRecord`, `TypeInfo = TypeInfo(TValue)`. `IsObject`/`IsArray`/`As*` all fail on the wrapper, so a stored object reads back as not-an-object. Root cause: Delphi's `TValue.Make` collapses `TValue`-in-`TValue`, FPC 3.2.2's doesn't. Fix: unwrap after **every** `GetArrayElement` of an array of `TValue`s. The helper is idempotent and a no-op on Delphi:
+
+  ```pascal
+  function UnwrapValue(const AValue: TValue): TValue;
+  type
+    PLocalValue = ^TValue;
+  begin
+    Result := AValue;
+    while (Result.Kind = tkRecord) and (Result.TypeInfo = TypeInfo(TValue)) do
+      Result := PLocalValue(Result.GetReferenceToRawData)^;
+  end;
+  ```
+
+  Reproduced by `scripts/rtti-probes/p30_tvalue_nested.dpr` on FPC 3.2.2 (`elem0.Kind=tkRecord`, `IsObject=False`). — [`pascal-amqp-faa`](https://github.com/fabianoallex/pascal-amqp-faa) (`AmqpUnwrapValue` in `src/AMQP.Wire.pas`)
+- **`TValue.From<TArray<TValue>>(x)` doesn't parse on FPC.** Symptom: *Operator is not overloaded: "TValue" shr "TArray$1$crc…"*. Root cause: FPC reads the closing `>>` as `shr`, and adding a space doesn't help. Fix: declare a named alias (`TValueArray = TArray<TValue>`) and write `TValue.From<TValueArray>(x)`. Reproduced by `p31_shr_generic.dpr`. — [`pascal-amqp-faa`](https://github.com/fabianoallex/pascal-amqp-faa)
+- **An inline `TypeInfo(TArray<TValue>)` doesn't match the alias declared in another unit.** Symptom: comparing `V.TypeInfo` against `TypeInfo(TArray<TValue>)` written inline in a consumer unit is silently `False` for values the decoder produced as `TAMQPValueArray`, an alias declared in `AMQP.Wire`. Root cause: on FPC 3.2 each unit's inline generic specialization gets its own type info. Within a **single** unit the two are equal (`p30` checks that), so the mismatch only shows up across units. Fix: compare against the shared alias, or better, don't test the array's type at all and unwrap every element. — [`pascal-amqp-faa`](https://github.com/fabianoallex/pascal-amqp-faa)
+- **FPC 3.2.2 internal compiler errors around `TValue`** (`Internal error 2015071704` / `200510032`), in two specific shapes:
+  1. A chain of `.Put(...)` calls ending in an inline `TValue.From<T>(literal)`. Fix: split it into separate `.Put()` statements.
+  2. `Table['key'].AsString` / `.AsExtended` / `.AsObject` chained directly on an indexer that returns `TValue`. Fix: assign the indexer result to a local `TValue` first. (`.AsBoolean`/`.AsInteger`/`.AsInt64` chained directly are fine.)
+
+  Not reproduced in isolation here: they depend on the surrounding construct. — [`pascal-amqp-faa`](https://github.com/fabianoallex/pascal-amqp-faa)
+- **The alternative design: don't use `TValue` at all.** `pascal-redis-faa` had a similar need (a tree of protocol replies) and, after `pascal-amqp-faa`'s experience, chose a small closed **enum + interface** model (`TRedisReplyKind` + `IRedisReply`) with no RTTI. The interface refcount also keeps the leak-checked test suite free of `try/finally` hunting through nested nodes. When the set of value kinds is small and fixed, this is cheaper than making `TValue` behave on both compilers. — [`pascal-redis-faa`](https://github.com/fabianoallex/pascal-redis-faa) (`docs/DECISOES.md` §9)
+
 ## Practical rules for dual-compiler RTTI code
 
 1. **`published` is the contract.** Anything a serializer/binder/ORM must see goes in a `published` section of a `{$M+}` class. Public-only properties exist only on Delphi's side.
@@ -114,4 +141,5 @@ The type-name rows matter for anything that maps by type name (JSON/ORM converte
 4. **Compare `TTypeKind` sets, not single kinds**, and route all kind checks through one helper (see above).
 5. **`{$IFNDEF FPC}^{$ENDIF}` on every `PropType` dereference** — wrap it once in a `PropTypeOf(PropInfo): PTypeInfo` helper.
 6. **Don't trust `TValue.ToString`, `IsOrdinal`, or type `Name`** on the FPC side.
-7. Under `{$MODE DELPHIUNICODE}` FPC's `string` becomes `tkUString`, but `TValue` implicit conversions still produce `tkAString` — don't mix mode changes into the RTTI story without re-testing.
+7. **After `GetArrayElement` on an array of `TValue`s, always unwrap** (see "Real cases"). If the set of value kinds is small and closed, consider an enum + interface model instead of `TValue`.
+8. Under `{$MODE DELPHIUNICODE}` FPC's `string` becomes `tkUString`, but `TValue` implicit conversions still produce `tkAString` — don't mix mode changes into the RTTI story without re-testing.

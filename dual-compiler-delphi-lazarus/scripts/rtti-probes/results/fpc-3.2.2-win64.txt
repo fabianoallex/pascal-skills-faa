@@ -252,3 +252,17 @@ p29_doc_helpers
       IsStringKind(N)=False
       IsStringKind(AnsiString)=True
       IsStringKind(ShortString)=True
+======================================================================
+p30_tvalue_nested
+  [fpc] COMPILED
+      elem0.Kind=tkRecord
+      elem0.IsObject=False
+      elem0 is TValue-in-TValue=True
+      TypeInfo(TArray<TValue>) = TypeInfo(TValArr)=True
+======================================================================
+p31_shr_generic
+  [fpc] COMPILE FAILED
+      ! p31_shr_generic.dpr(7,33) Error: Operator is not overloaded: "TValue" shr "TArray$1$crcDCBBDE6C"
+      ! p31_shr_generic.dpr(10) Fatal: There were 1 errors compiling module, stopping
+      ! Error: C:\lazarus4.0\fpc\3.2.2\bin\x86_64-win64\ppcx64.exe returned an error exitcode
+      ~ p31_shr_generic.dpr(7,35) Warning: Variable "A" of a managed type does not seem to be initialized
