@@ -174,3 +174,10 @@ IsStringKind(Name)=True
 IsStringKind(N)=False
 IsStringKind(AnsiString)=True
 IsStringKind(ShortString)=True
+==== p30_tvalue_nested
+elem0.Kind=tkRecord
+elem0.IsObject=False
+elem0 is TValue-in-TValue=True
+TypeInfo(TArray<TValue>) = TypeInfo(TValArr)=True
+==== p31_shr_generic
+Kind=tkDynArray

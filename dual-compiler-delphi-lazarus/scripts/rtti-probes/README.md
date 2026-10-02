@@ -39,6 +39,6 @@ With a paid Delphi edition, `COMPILERS=fpc,delphi python run_probes.py` builds b
 
 Compile failures don't appear in any output file: `p02_proptype_fpc_style` gives E2010 and `p18_enum_explicit_values` gives E2134 on Delphi, as recorded in `rtti-gotchas.md`.
 
-Not yet run on Delphi: `p30_tvalue_nested` and `p31_shr_generic`, which reproduce `pascal-amqp-faa`'s real `TValue` cases on FPC. The expected Delphi side (elements collapsed, `>>` parses) comes from that project's notes; a Build All of `RttiProbes.groupproj` would confirm it.
+`p30_tvalue_nested` and `p31_shr_generic` were built on Delphi 12 CE Win32 later, standalone; their output is appended to `delphi-12-ce-win32-standalone.txt`. `p30` contradicts `pascal-amqp-faa`'s note: Delphi wraps nested `TValue`s too.
 
 When re-verifying on another version, run the probes and diff the output against these files. Then record the version in `rtti-gotchas.md` rather than overwriting the existing claims.
