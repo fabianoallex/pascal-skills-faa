@@ -1,0 +1,34 @@
+# RTTI probes
+
+The evidence behind `../../references/rtti-gotchas.md`. Each `pNN_*.dpr` is one small console program testing one RTTI feature, written once for both compilers (`{$IFDEF FPC}` only where unavoidable). One program per feature on purpose: a feature that doesn't compile on one side can't hide the results of the others.
+
+Each probe prints `key=value` lines; a runtime exception prints `EXCEPTION=<class>: <message>`.
+
+## Running
+
+**FPC** (any edition, command line):
+
+```
+python run_probes.py            # all probes
+python run_probes.py p08 p09    # a subset, by name fragment
+```
+
+Set `FPC` to point at another `fpc.exe` (default: Lazarus 4.0's FPC 3.2.2 Win64).
+
+**Delphi Community Edition** can't build from the command line, so:
+
+```
+python gen_delphi.py
+```
+
+turns every probe into a unit and generates `delphi_side/rtti_delphi.dproj`, which runs them all. Open that `.dproj` (not the `.dpr`) in the IDE, choose Win32 or Win64, and run it once; the output lands in `delphi_results.txt` here. The `.dproj` comes from `scaffold_dual_project.py`'s template because the one the CE IDE creates for a bare `.dpr` has no Win64 platform and can't get one.
+
+A few probes are left out of that project, because one unit that fails to compile would block the whole build (see `SKIP` in `gen_delphi.py`). Compile those standalone `.dpr` files in the IDE.
+
+With a paid Delphi edition, `COMPILERS=fpc,delphi python run_probes.py` builds both sides with `dcc64` (override with `DCC`).
+
+## Reference runs
+
+`results/` holds the runs `rtti-gotchas.md` is based on: FPC 3.2.2 Win64, Delphi 12 CE Win32 and Win64. When re-verifying on another version, run the probes and diff the output against these files. Then record the version in `rtti-gotchas.md` rather than overwriting the existing claims.
+
+Not in the Delphi reference runs: `p29_doc_helpers` (added later) and the standalone compile-only probes. Their Delphi results (E2010 for `p02_proptype_fpc_style`, E2134 for `p18`, `p20`/`p24` compile and run) are recorded in `rtti-gotchas.md`.

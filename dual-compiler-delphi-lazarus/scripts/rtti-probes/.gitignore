@@ -1,0 +1,14 @@
+# Build output and generated files -- results/ holds the committed reference runs.
+out/
+delphi_side/
+delphi_results.txt
+*.exe
+*.dcu
+*.o
+*.ppu
+*.res
+*.dproj
+*.dproj.local
+*.identcache
+__history/
+__recovery/

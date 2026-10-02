@@ -1,0 +1,254 @@
+======================================================================
+p01_typinfo_published
+  [fpc] COMPILED
+      count=14
+      kind.Name=tkAString
+      kind.Count=tkInteger
+      kind.Flag=tkBool
+      kind.A=tkAString
+      kind.U=tkQWord
+      kind.E=tkEnumeration
+      kind.W=tkWString
+      kind.S=tkSString
+      kind.C=tkChar
+      kind.D=tkFloat
+      kind.I64=tkInt64
+      kind.SetP=tkSet
+      kind.Obj=tkClass
+      kind.Ev=tkMethod
+      public_prop_visible_to_typinfo=False
+      GetStrProp=abc
+      GetOrdProp=42
+      GetEnumProp=meC
+      GetSetProp=[meA,meC]
+      GetPropValue.Flag=1
+      GetInt64Prop=1234567890123
+      GetFloatProp=1,5
+      GetEnumName=meB
+      GetEnumValue=2
+      IsPublishedProp=True
+      PropIsType.Flag.tkBool?=False
+======================================================================
+p02_proptype_delphi_style
+  [fpc] COMPILE FAILED
+      ! p02_proptype_delphi_style.dpr(13,33) Error: Incompatible types: got "TTypeInfo" expected "PTypeInfo"
+      ! p02_proptype_delphi_style.dpr(16) Fatal: There were 1 errors compiling module, stopping
+      ! Error: C:\lazarus4.0\fpc\3.2.2\bin\x86_64-win64\ppcx64.exe returned an error exitcode
+======================================================================
+p02_proptype_fpc_style
+  [fpc] COMPILED
+      PropType.Name=LongInt
+======================================================================
+p04_typekinds
+  [fpc] COMPILED
+      ~ p04_typekinds.dpr(31) Warning: Implicit uses of Variants unit
+      Boolean=tkBool
+      ByteBool=tkBool
+      string=tkAString
+      AnsiString=tkAString
+      UnicodeString=tkUString
+      WideString=tkWString
+      ShortString=tkSString
+      Char=tkChar
+      AnsiChar=tkChar
+      Integer=tkInteger
+      Cardinal=tkInteger
+      Int64=tkInt64
+      UInt64=tkQWord
+      Single=tkFloat
+      Double=tkFloat
+      Extended=tkFloat
+      Currency=tkFloat
+      Comp=tkInt64
+      Variant=tkVariant
+      enum=tkEnumeration
+      set=tkSet
+      record=tkRecord
+      dynarray=tkDynArray
+      TBytes=tkDynArray
+      static array=tkArray
+      class=tkClass
+      IInterface=tkInterface
+      TNotifyEvent=tkMethod
+      class of=tkClassRef
+      Pointer=tkPointer
+      procvar=tkProcVar
+======================================================================
+p05_rtti_properties
+  [fpc] COMPILED
+      TC.GetProperties=PublProp:mvPublished
+      PublProp.GetValue=7
+      PubProp=nil
+      PublProp.PropertyType=LongInt
+      TNoM(no $M+).GetProperties=[]
+      TStringList.GetProperties.count=0
+======================================================================
+p06_rtti_fields
+  [fpc] COMPILE FAILED
+      ! p06_rtti_fields.dpr(11,27) Error: Identifier not found "TRttiField"
+      ! p06_rtti_fields.dpr(11,37) Error: Error in type definition
+      ! p06_rtti_fields.dpr(15,28) Error: identifier idents no member "GetFields"
+======================================================================
+p07_rtti_class_methods
+  [fpc] COMPILED
+      TC.GetDeclaredMethods=[]
+      TC.GetMethods.count(incl. inherited)=0
+      GetMethod(Add)=nil
+      MethodAddress(PublM)<>nil=True
+======================================================================
+p08_rtti_interface_methods
+  [fpc] COMPILED
+      method.Add=params[A:LongInt B:LongInt] returns LongInt
+      method.Greet=params[Name:AnsiString] returns AnsiString
+      Invoke Add(2,3)=5
+      Invoke Greet=hi bob
+======================================================================
+p09_virtual_interface
+  [fpc] COMPILED
+      handler.Method=Add
+      handler.Length(Args)=3
+      F.Add(2,3)=5
+======================================================================
+p10_virtual_method_interceptor
+  [fpc] COMPILE FAILED
+      ! p10_virtual_method_interceptor.dpr(10,10) Error: Identifier not found "TVirtualMethodInterceptor"
+      ! p10_virtual_method_interceptor.dpr(10,35) Error: Error in type definition
+      ! p10_virtual_method_interceptor.dpr(13,10) Error: Identifier not found "TVirtualMethodInterceptor"
+======================================================================
+p11_attributes_class_prop
+  [fpc] COMPILE FAILED
+      ! p11_attributes_class_prop.dpr(6,40) Error: Identifier not found "TCustomAttribute"
+      ! p11_attributes_class_prop.dpr(6,40) Error: class type expected, but got "<erroneous type>"
+      ! p11_attributes_class_prop.dpr(11,3) Fatal: Syntax error, "BEGIN" expected but "[" found
+======================================================================
+p12_attributes_field_method
+  [fpc] COMPILE FAILED
+      ! p12_attributes_field_method.dpr(6,40) Error: Identifier not found "TCustomAttribute"
+      ! p12_attributes_field_method.dpr(6,40) Error: class type expected, but got "<erroneous type>"
+      ! p12_attributes_field_method.dpr(12,5) Fatal: Syntax error, "identifier" expected but "[" found
+======================================================================
+p13_record_fields
+  [fpc] COMPILE FAILED
+      ! p13_record_fields.dpr(6,27) Error: Identifier not found "TRttiField"
+      ! p13_record_fields.dpr(6,37) Error: Error in type definition
+      ! p13_record_fields.dpr(10,38) Error: identifier idents no member "GetFields"
+======================================================================
+p14_tvalue_basics
+  [fpc] COMPILED
+      implicit Integer.Kind=tkInteger
+      AsInteger=5
+      implicit string.Kind=tkAString
+      AsString=abc
+      From<Integer>.ToString=42
+      From<string>.AsString=gen
+      From<TR>.Kind=tkRecord
+      ExtractRawData.B=rec
+      IsType<TR>=True
+      Empty.IsEmpty=True
+      implicit Boolean.Kind=tkBool
+      string.AsInteger raises=EInvalidCast
+      Integer.AsString raises=EInvalidCast
+======================================================================
+p15_tvalue_astype
+  [fpc] COMPILE FAILED
+      ! p15_tvalue_astype.dpr(7,18) Error: identifier idents no member "AsType"
+      ! p15_tvalue_astype.dpr(7,33) Error: Illegal expression
+      ! p15_tvalue_astype.dpr(7,35) Fatal: Syntax error, ";" expected but "identifier SAY" found
+======================================================================
+p16_findtype_gettypes
+  [fpc] COMPILE FAILED
+      ! p16_findtype_gettypes.dpr(10,26) Error: identifier idents no member "QualifiedName"
+      ! p16_findtype_gettypes.dpr(11,12) Error: identifier idents no member "FindType"
+      ! p16_findtype_gettypes.dpr(11,23) Error: identifier idents no member "QualifiedName"
+======================================================================
+p17_instance_type
+  [fpc] COMPILED
+      Name=TFoo
+      DeclaringUnitName=p17_instance_type
+      MetaclassType=TFoo
+      BaseType=TStringList
+      IsInstance=True
+      MetaclassType.Create=TFoo
+      TypeKind(Integer)=tkInteger
+      IsOrdinal(Integer)=False
+      IsManaged(string)=True
+======================================================================
+p18_enum_explicit_values
+  [fpc] COMPILE FAILED
+      ! p18_enum_explicit_values.dpr(7,47) Error: No type info available for this type
+      ! p18_enum_explicit_values.dpr(8,40) Error: No type info available for this type
+      ! p18_enum_explicit_values.dpr(10) Fatal: There were 2 errors compiling module, stopping
+======================================================================
+p19_rtti_directive
+  [fpc] COMPILED
+      ~ p19_rtti_directive.dpr(6,4) Warning: Illegal compiler directive "$RTTI"
+      GetDeclaredMethods=[]
+======================================================================
+p20_generic_class
+  [fpc] COMPILE FAILED
+      ! p20_generic_class.dpr(9,31) Error: This kind of property cannot be published
+      ! p20_generic_class.dpr(24) Fatal: There were 1 errors compiling module, stopping
+      ! Error: C:\lazarus4.0\fpc\3.2.2\bin\x86_64-win64\ppcx64.exe returned an error exitcode
+======================================================================
+p21_enum_rtti_helpers
+  [fpc] COMPILE FAILED
+      ! p21_enum_rtti_helpers.dpr(7,21) Error: Identifier not found "TRttiEnumerationType"
+      ! p21_enum_rtti_helpers.dpr(8,35) Error: Identifier not found "TRttiEnumerationType"
+      ! p21_enum_rtti_helpers.dpr(10) Fatal: There were 2 errors compiling module, stopping
+======================================================================
+p22_dynarray_rtti
+  [fpc] COMPILED
+      IsArray=True
+      GetArrayLength=3
+      GetArrayElement(2)=9
+======================================================================
+p23_dynarray_rtti_type
+  [fpc] COMPILE FAILED
+      ! p23_dynarray_rtti_type.dpr(9,57) Error: Identifier not found "TRttiDynamicArrayType"
+      ! p23_dynarray_rtti_type.dpr(11) Fatal: There were 1 errors compiling module, stopping
+      ! Error: C:\lazarus4.0\fpc\3.2.2\bin\x86_64-win64\ppcx64.exe returned an error exitcode
+======================================================================
+p24_typedata_unitname
+  [fpc] COMPILED
+      TypeData.UnitName=p24_typedata_unitname
+      TypeData.ClassType=TP
+======================================================================
+p25_reference_to_typeinfo
+  [fpc] COMPILE FAILED
+      ! p25_reference_to_typeinfo.dpr(5,15) Error: Identifier not found "reference"
+      ! p25_reference_to_typeinfo.dpr(5,25) Error: Error in type definition
+      ! p25_reference_to_typeinfo.dpr(5,25) Fatal: Syntax error, ";" expected but "TO" found
+======================================================================
+p26_generic_concrete_prop
+  [fpc] COMPILED
+      Name=TBox$1$crc9F312717
+      GetProperties=[Count:LongInt]
+======================================================================
+p27_string_kind_by_mode
+  [fpc] COMPILED
+      ~ util.inc(2,58) Warning: Implicit string type conversion from "AnsiString" to "UnicodeString"
+      ~ util.inc(3,65) Warning: Implicit string type conversion from "AnsiString" to "UnicodeString"
+      ~ p27_string_kind_by_mode.dpr(18,45) Warning: Implicit string type conversion from "AnsiString" to "UnicodeString"
+      TypeInfo(string).Kind=tkUString
+      published string prop kind=tkUString
+      TValue := literal .Kind=tkAString
+      SizeOf(Char)=2
+======================================================================
+p28_tvalue_tostring
+  [fpc] COMPILED
+      Double.ToString=
+      Double.AsExtended=1,5
+      Set.ToString=
+      Record.ToString=
+      DynArray.ToString=
+      Object.ToString=
+      From<Enum>.ToString=meB
+======================================================================
+p29_doc_helpers
+  [fpc] COMPILED
+      IsBooleanType(Flag)=True
+      IsBooleanType(N)=False
+      IsStringKind(Name)=True
+      IsStringKind(N)=False
+      IsStringKind(AnsiString)=True
+      IsStringKind(ShortString)=True
