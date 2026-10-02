@@ -12,3 +12,7 @@ delphi_results.txt
 *.identcache
 __history/
 __recovery/
+Win32/
+Win64/
+*.groupproj
+*.groupproj.local

@@ -1,0 +1,176 @@
+==== p01_typinfo_published
+count=14
+kind.Name=tkUString
+kind.Count=tkInteger
+kind.Flag=tkEnumeration
+kind.A=tkLString
+kind.U=tkInt64
+kind.E=tkEnumeration
+kind.W=tkWString
+kind.S=tkString
+kind.C=tkWChar
+kind.D=tkFloat
+kind.I64=tkInt64
+kind.SetP=tkSet
+kind.Obj=tkClass
+kind.Ev=tkMethod
+public_prop_visible_to_typinfo=False
+GetStrProp=abc
+GetOrdProp=42
+GetEnumProp=meC
+GetSetProp=[meA,meC]
+GetPropValue.Flag=True
+GetInt64Prop=1234567890123
+GetFloatProp=1,5
+GetEnumName=meB
+GetEnumValue=2
+IsPublishedProp=True
+PropIsType.Flag.tkBool?=True
+==== p02_proptype_delphi_style
+PropType.Name=Integer
+==== p02_proptype_fpc_style
+<not built>
+==== p04_typekinds
+Boolean=tkEnumeration
+ByteBool=tkEnumeration
+string=tkUString
+AnsiString=tkLString
+UnicodeString=tkUString
+WideString=tkWString
+ShortString=tkString
+Char=tkWChar
+AnsiChar=tkChar
+Integer=tkInteger
+Cardinal=tkInteger
+Int64=tkInt64
+UInt64=tkInt64
+Single=tkFloat
+Double=tkFloat
+Extended=tkFloat
+Currency=tkFloat
+Comp=tkFloat
+Variant=tkVariant
+enum=tkEnumeration
+set=tkSet
+record=tkRecord
+dynarray=tkDynArray
+TBytes=tkDynArray
+static array=tkArray
+class=tkClass
+IInterface=tkInterface
+TNotifyEvent=tkMethod
+class of=tkClassRef
+Pointer=tkPointer
+procvar=tkProcedure
+==== p05_rtti_properties
+TC.GetProperties=PubProp:mvPublic PublProp:mvPublished
+PublProp.GetValue=7
+PubProp.GetValue=8
+PublProp.PropertyType=Integer
+TNoM(no $M+).GetProperties=[X]
+TStringList.GetProperties.count=25
+==== p06_rtti_fields
+TC.GetFields=FPriv:mvPrivate FProt:mvProtected FPub:mvPublic
+==== p07_rtti_class_methods
+TC.GetDeclaredMethods=[Add:mvPublic PublM:mvPublished]
+TC.GetMethods.count(incl. inherited)=36
+Add.ToString=function Add(A: Integer; B: Integer): Integer
+Invoke Add(2,3)=5
+MethodAddress(PublM)<>nil=True
+==== p08_rtti_interface_methods
+method.Add=params[A:Integer B:Integer] returns Integer
+method.Greet=params[Name:string] returns string
+Invoke Add(2,3)=5
+Invoke Greet=hi bob
+==== p09_virtual_interface
+handler.Method=Add
+handler.Length(Args)=3
+F.Add(2,3)=5
+==== p10_virtual_method_interceptor
+O.Val (intercepted)=99
+==== p11_attributes_class_prop
+class attrs=[cls]
+published prop attrs=[prop]
+public prop attrs=[pub]
+==== p12_attributes_field_method
+field attr=field
+method attr=meth
+==== p13_record_fields
+TR.GetFields=A:Integer B:string
+R.B after SetValue=xyz
+==== p14_tvalue_basics
+implicit Integer.Kind=tkInteger
+AsInteger=5
+implicit string.Kind=tkUString
+AsString=abc
+From<Integer>.ToString=42
+From<string>.AsString=gen
+From<TR>.Kind=tkRecord
+ExtractRawData.B=rec
+IsType<TR>=True
+Empty.IsEmpty=True
+implicit Boolean.Kind=tkEnumeration
+string.AsInteger raises=EInvalidCast
+Integer.AsString raises=EInvalidCast
+==== p15_tvalue_astype
+AsType<Integer>=5
+TryAsType<string>=False
+==== p16_findtype_gettypes
+
+<exit code 1> Exception ENonPublicType in module p16_findtype_gettypes.exe at 00063D82.
+Type 'TFoo' is not declared in the interface section of a unit.
+==== p17_instance_type
+Name=TFoo
+DeclaringUnitName=p17_instance_type
+MetaclassType=TFoo
+BaseType=TStringList
+IsInstance=True
+MetaclassType.Create=TFoo
+TypeKind(Integer)=tkInteger
+IsOrdinal(Integer)=True
+IsManaged(string)=True
+==== p18_enum_explicit_values
+<not built>
+==== p19_rtti_directive
+GetDeclaredMethods=[PrivM:mvPrivate PubM:mvPublic]
+==== p20_generic_class
+Name=TBox<System.Integer>
+prop Value type=Integer
+Value after SetValue=11
+==== p21_enum_rtti_helpers
+GetName<T>=meB
+GetValue<T>=2
+==== p22_dynarray_rtti
+IsArray=True
+GetArrayLength=3
+GetArrayElement(2)=9
+==== p23_dynarray_rtti_type
+ElementType=Integer
+==== p24_typedata_unitname
+TypeData.UnitName=p24_typedata_unitname
+TypeData.ClassType=TP
+==== p25_reference_to_typeinfo
+reference to.Kind=tkInterface
+==== p26_generic_concrete_prop
+Name=TBox<System.Integer>
+GetProperties=[Value:Integer Count:Integer]
+==== p27_string_kind_by_mode
+TypeInfo(string).Kind=tkUString
+published string prop kind=tkUString
+TValue := literal .Kind=tkUString
+SizeOf(Char)=2
+==== p28_tvalue_tostring
+Double.ToString=1,5
+Double.AsExtended=1,5
+Set.ToString=[meB]
+Record.ToString=(record)
+DynArray.ToString=(dynamic array [0..1] of Integer)
+Object.ToString=(TObject @ 03160F00)
+From<Enum>.ToString=meB
+==== p29_doc_helpers
+IsBooleanType(Flag)=True
+IsBooleanType(N)=False
+IsStringKind(Name)=True
+IsStringKind(N)=False
+IsStringKind(AnsiString)=True
+IsStringKind(ShortString)=True

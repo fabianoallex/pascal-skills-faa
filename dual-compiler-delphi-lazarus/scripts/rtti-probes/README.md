@@ -25,10 +25,18 @@ turns every probe into a unit and generates `delphi_side/rtti_delphi.dproj`, whi
 
 A few probes are left out of that project, because one unit that fails to compile would block the whole build (see `SKIP` in `gen_delphi.py`). Compile those standalone `.dpr` files in the IDE.
 
+Alternatively, `python gen_delphi_group.py` generates `RttiProbes.groupproj` with one project per probe, the same `.dpr` files FPC builds, untouched. **Build All** in the IDE; the executables land in `Win32\Debug\` (or `Win64\Debug\`), ready to run and diff. The two probes expected to fail on Delphi (`p02_proptype_fpc_style`, `p18_enum_explicit_values`) are placed last, because the IDE stops Build All at the first project that fails.
+
 With a paid Delphi edition, `COMPILERS=fpc,delphi python run_probes.py` builds both sides with `dcc64` (override with `DCC`).
 
 ## Reference runs
 
-`results/` holds the runs `rtti-gotchas.md` is based on: FPC 3.2.2 Win64, Delphi 12 CE Win32 and Win64. When re-verifying on another version, run the probes and diff the output against these files. Then record the version in `rtti-gotchas.md` rather than overwriting the existing claims.
+`results/` holds the runs `rtti-gotchas.md` is based on:
 
-Not in the Delphi reference runs: `p29_doc_helpers` (added later) and the standalone compile-only probes. Their Delphi results (E2010 for `p02_proptype_fpc_style`, E2134 for `p18`, `p20`/`p24` compile and run) are recorded in `rtti-gotchas.md`.
+- `fpc-3.2.2-win64.txt`: `run_probes.py`.
+- `delphi-12-ce-win32.txt` / `delphi-12-ce-win64.txt`: the `gen_delphi.py` combined runner.
+- `delphi-12-ce-win32-standalone.txt`: every probe built on its own through `RttiProbes.groupproj`. It covers the probes the runner skips (`p20`, `p24`, `p29`) and matches the runner on everything else, apart from object addresses and how `p16`'s uncaught exception is printed.
+
+Compile failures don't appear in any output file: `p02_proptype_fpc_style` gives E2010 and `p18_enum_explicit_values` gives E2134 on Delphi, as recorded in `rtti-gotchas.md`.
+
+When re-verifying on another version, run the probes and diff the output against these files. Then record the version in `rtti-gotchas.md` rather than overwriting the existing claims.
