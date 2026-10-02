@@ -105,6 +105,14 @@ that every IDE-saved `.groupproj` in the reference repos has. Adding it alone
 did not make the test project appear (the target names did), but the IDE
 keeps it when it saves, so a generated file now matches a saved one.
 
+Confirmed after both fixes in
+[`pascal-jsonmapper-faa`](https://github.com/fabianoallex/pascal-jsonmapper-faa)
+(2026-10, Delphi 12 CE). `add` created `samples/01-basics/Basics.dproj` and
+`samples/02-custom-converter/CustomConverter.dproj` in a group already holding
+a dotted test project (`PascalJsonMapper_UnitTests`). The IDE listed all
+three projects. Build All for Win32 and Win64 left `git status` clean: the
+generated `.dproj` and `.groupproj` were accepted unchanged.
+
 All three subcommands take `--dry-run` (print what would be written, write
 nothing) and require `--force` to overwrite an existing file.
 
