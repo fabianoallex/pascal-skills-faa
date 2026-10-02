@@ -353,6 +353,8 @@ LPI_SEARCH_PATHS_WITH_LPK = ""  # resolution comes entirely from the package
 # Derived from pascal-amqp-faa/AMQP.groupproj (structure only -- trimmed to
 # one project entry). Carries SCAFFOLD anchors so `add` can find where to
 # insert later without doing fragile text-surgery on a hand-authored file.
+# The ProjectExtensions block is in every .groupproj the IDE itself saves
+# (AMQP, Redis, PascalDb); the IDE keeps it when it rewrites the file.
 GROUPPROJ_TEMPLATE = """<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>__GUID__</ProjectGuid>
@@ -363,6 +365,13 @@ GROUPPROJ_TEMPLATE = """<Project xmlns="http://schemas.microsoft.com/developer/m
         </Projects>
         <!-- SCAFFOLD:PROJECTS -->
     </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
     <Target Name="__NAME__">
         <MSBuild Projects="__NAME__.dproj"/>
     </Target>
@@ -596,6 +605,21 @@ def insert_before_anchor(text, anchor, insertion):
     return text[:line_start] + insertion + "\n" + indent + anchor + text[idx + len(anchor):]
 
 
+def ide_target_name(dproj_path):
+    """The <Target Name> the Delphi IDE expects for a project in a .groupproj:
+    the .dproj file name without extension, with '.' turned into '_'
+    (PascalJsonMapper.UnitTests.dproj -> PascalJsonMapper_UnitTests; the
+    IDE-saved PascalDb.groupproj has PascalDb_UnitTests the same way).
+
+    Seen in pascal-jsonmapper-faa with Delphi 12 CE: a project registered
+    under any other target name (PascalJsonMapperUnitTests) was not listed
+    in the Projects window, even after closing and reopening the group;
+    re-adding it in the IDE rewrote exactly those target names. Only '.'
+    was observed; other non-identifier characters are mapped to '_' by
+    analogy, not verified."""
+    return re.sub(r"[^A-Za-z0-9_]", "_", Path(dproj_path).stem)
+
+
 def register_into_groups(name, dproj_path, lpi_path, groupproj_path, lpg_path, dry_run, force):
     """Insert an ALREADY-EXISTING dproj/lpi pair into a .groupproj/.lpg.
 
@@ -607,6 +631,13 @@ def register_into_groups(name, dproj_path, lpi_path, groupproj_path, lpg_path, d
     """
     dproj_rel = to_win_path(os.path.relpath(dproj_path, groupproj_path.parent))
     lpi_rel = to_win_path(os.path.relpath(lpi_path, lpg_path.parent))
+
+    target = ide_target_name(dproj_path)
+    if name and name != target:
+        print("note: --name %r ignored for the .groupproj targets; the Delphi IDE "
+              "only lists a project whose target is named after its .dproj file, "
+              "so using %r" % (name, target))
+    name = target
 
     groupproj_snippet = (
         '        <Projects Include="%s">\n'
@@ -727,7 +758,7 @@ def cmd_register(args):
     groupproj_path = Path(args.groupproj).resolve()
     lpg_path = Path(args.lpg).resolve()
 
-    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", name):
+    if name and not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", name):
         raise SystemExit("Project name must be a valid Pascal identifier: %r" % name)
     if not dproj_path.exists():
         raise SystemExit("--dproj not found: %s" % dproj_path)
@@ -793,9 +824,10 @@ def build_parser():
     p_reg = sub.add_parser("register",
                             help="Wire an already-existing .dproj/.lpi pair into the group files "
                                  "(no starter unit/.dpr generated)")
-    p_reg.add_argument("--name", required=True,
-                        help="Target name used for the <Target Name=\"...\"> entries "
-                             "(a valid Pascal identifier)")
+    p_reg.add_argument("--name", required=False,
+                        help="Optional, kept for compatibility: the .groupproj target "
+                             "name is always derived from the .dproj file name "
+                             "('.' -> '_'), the only name the Delphi IDE accepts")
     p_reg.add_argument("--dproj", required=True, help="Path to the existing .dproj")
     p_reg.add_argument("--lpi", required=True, help="Path to the existing .lpi")
     p_reg.add_argument("--groupproj", required=True, help="Path to the existing .groupproj to update")

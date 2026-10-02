@@ -78,10 +78,32 @@ hand, per the note above, or a project you hand-converted using the
 conversion checklist below — with no throwaway starter files:
 
 ```
-python scripts/scaffold_dual_project.py register --name MyTests \
-    --dproj tests/Unit/MyTests.dproj --lpi tests/Unit/fpc/MyTestsFpc.lpi \
+python scripts/scaffold_dual_project.py register \
+    --dproj tests/Unit/MyProject.UnitTests.dproj \
+    --lpi tests/Unit/fpc/MyProjectUnitTestsFpc.lpi \
     --groupproj MyProject.groupproj --lpg MyProject.lpg
 ```
+
+**The `.groupproj` target name comes from the `.dproj` file name, not from
+`--name`.** The Delphi IDE expects each project's `<Target Name>` to be the
+`.dproj` file name without extension, with `.` turned into `_`
+(`MyProject.UnitTests.dproj` becomes `MyProject_UnitTests`). The IDE-saved
+`PascalDb.groupproj` follows the same rule. This was seen in
+[`pascal-jsonmapper-faa`](https://github.com/fabianoallex/pascal-jsonmapper-faa)
+with Delphi 12 CE: `register --name PascalJsonMapperUnitTests` produced
+targets the IDE didn't accept. The test project never showed in the Projects
+window, even after closing and reopening the group, while the `<Projects>`
+entry itself was correct. Re-adding the project in the IDE changed exactly
+those target names. `pascal-snake` never hit this because its `--name`
+happened to match its `.dproj` file name. `register` now derives the name
+itself: `--name` is optional, and when it disagrees, the script prints a note
+and uses the derived name. Only `.` was observed; other non-identifier
+characters are mapped to `_` by analogy, not verified.
+
+`new` also writes the `<ProjectExtensions>` block (`Default.Personality.12`)
+that every IDE-saved `.groupproj` in the reference repos has. Adding it alone
+did not make the test project appear (the target names did), but the IDE
+keeps it when it saves, so a generated file now matches a saved one.
 
 All three subcommands take `--dry-run` (print what would be written, write
 nothing) and require `--force` to overwrite an existing file.
