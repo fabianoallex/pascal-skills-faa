@@ -25,7 +25,8 @@ it), never through another library's `external/` folder.
 | REST API on Horse: error handler, CORS, request log, Bearer/JWT auth, rate limit | pascal-api-infra-faa | `src/horse/PascalApi.Horse.Middlewares` | one configuration per middleware per process (Horse's FPC callbacks are plain procedures) |
 | JWT HS256, SHA-256, HMAC-SHA256, Base64url (FPC 3.2.2 has no SHA-256) | pascal-api-infra-faa | `PascalApi.Jwt`, `PascalApi.Crypto` | only `SysUtils`: candidate to move to pascal-common-faa when a second library needs it |
 | Paging/ordering from the query string, `.env` config, file logging, rate-limit window, DTO bases | pascal-api-infra-faa | `PascalApi.Pagination`, `.OrderBy`, `.Config`, `.FileLog`, `.RateLimitState`, `.Dto` | |
-| UTF-8 bytes ⇄ string that refuses to corrupt on a non-UTF-8 code page, MD5 | pascal-api-infra-faa / pascal-db-faa | `PascalApi.Text` / `PdbUtf8BytesToString` in `PascalDb.SqlSources` | the same helper exists twice: candidate for pascal-common-faa |
+| UTF-8 bytes to string that refuses to corrupt text on a non-UTF-8 code page | pascal-common-faa (1.4.0+) | `PascalCommon.Utf8` (`PcTryUtf8BytesToString`) | moved there from pascal-db-faa and pascal-api-infra-faa, which keep wrappers |
+| String to UTF-8 bytes, MD5 hex, UTF-8-safe prefix | pascal-api-infra-faa | `PascalApi.Text` | |
 | AMQP 0-9-1 client and an embeddable broker (no RabbitMQ needed) | pascal-amqp-faa | `AMQP.*` | |
 | Redis client (RESP2/RESP3, pool, pipelining, Pub/Sub, Streams, TLS) | pascal-redis-faa | `Redis.*` | |
 | Local IPC / TCP / TLS messaging with one API (Named Pipe on Windows, Unix socket on Linux) | pascal-pipes-faa (was pascal-named-pipes-faa) | `Pipes.*` | Android (Delphi) too, without the local transport |
@@ -48,7 +49,7 @@ it), never through another library's `external/` folder.
 
 - Add a row when a library gains something another project could need; the library's README
   "Contents" table is the source.
-- When a second library needs a piece that lives in a specific one (the UTF-8 helper above),
+- When a second library needs a piece that lives in a specific one (as the UTF-8 decoder did),
   that piece moves to pascal-common-faa, whose rule is "what at least two libraries need";
   pascal-common-faa's `docs/plan.md` keeps the list of such candidates.
 - State versions in the libraries' READMEs, not here: this table says where to look, not what is
