@@ -28,6 +28,7 @@ it), never through another library's `external/` folder.
 | OpenAPI 3.0.3 / Swagger UI from the route declarations and DTO types (no attributes) | pascal-api-infra-faa (0.3.0+) | `PascalApi.OpenApi`, `src/horse/PascalApi.Horse.OpenApi` (`TRouteDoc`) | metadata in code (`TApiSchema.Describe`): FPC 3.2.2 has no custom attributes; Bearer/JWT scheme from the auth middleware (0.7.0+) |
 | MCP server (protocol 2026-07-28): the documented routes as tools for AI clients | pascal-api-infra-faa (0.5.0+) | `PascalApi.Mcp`, `src/horse/PascalApi.Horse.Mcp` (`TMcpEndpoint`) | tool calls go back through the API over HTTP (all middlewares apply); checked with the official Python SDK |
 | UTF-8 bytes to string that refuses to corrupt text on a non-UTF-8 code page | pascal-common-faa (1.4.0+) | `PascalCommon.Utf8` (`PcTryUtf8BytesToString`) | moved there from pascal-db-faa and pascal-api-infra-faa, which keep wrappers |
+| W3C Trace Context: trace/span ids, `traceparent`/`tracestate` parse and format | pascal-common-faa (1.5.0+) | `PascalCommon.TraceContext` (`PcNewTraceId`, `PcTryParseTraceParent`...) | ids from the OS random source; the base of pascal-api-infra-faa's observability (metrics and spans come later) |
 | String to UTF-8 bytes, MD5 hex, UTF-8-safe prefix | pascal-api-infra-faa | `PascalApi.Text` | |
 | AMQP 0-9-1 client and an embeddable broker (no RabbitMQ needed) | pascal-amqp-faa | `AMQP.*` | |
 | Redis client (RESP2/RESP3, pool, pipelining, Pub/Sub, Streams, TLS) | pascal-redis-faa | `Redis.*` | |
