@@ -29,6 +29,7 @@ it), never through another library's `external/` folder.
 | MCP server (protocol 2026-07-28): the documented routes as tools for AI clients | pascal-api-infra-faa (0.5.0+) | `PascalApi.Mcp`, `src/horse/PascalApi.Horse.Mcp` (`TMcpEndpoint`) | tool calls go back through the API over HTTP (all middlewares apply); checked with the official Python SDK |
 | UTF-8 bytes to string that refuses to corrupt text on a non-UTF-8 code page | pascal-common-faa (1.4.0+) | `PascalCommon.Utf8` (`PcTryUtf8BytesToString`) | moved there from pascal-db-faa and pascal-api-infra-faa, which keep wrappers |
 | W3C Trace Context: trace/span ids, `traceparent`/`tracestate` parse and format | pascal-common-faa (1.5.0+) | `PascalCommon.TraceContext` (`PcNewTraceId`, `PcTryParseTraceParent`...) | ids from the OS random source; the base of pascal-api-infra-faa's observability (metrics and spans come later) |
+| Metrics: counter, gauge, histogram, registry, Prometheus `/metrics` text | pascal-common-faa (1.6.0+) | `PascalCommon.Metrics` (`PcMetrics`, `PcPrometheusText`) | OpenTelemetry names converted to Prometheus ones; lock-free recording on a series |
 | String to UTF-8 bytes, MD5 hex, UTF-8-safe prefix | pascal-api-infra-faa | `PascalApi.Text` | |
 | AMQP 0-9-1 client and an embeddable broker (no RabbitMQ needed) | pascal-amqp-faa | `AMQP.*` | |
 | Redis client (RESP2/RESP3, pool, pipelining, Pub/Sub, Streams, TLS) | pascal-redis-faa | `Redis.*` | |
