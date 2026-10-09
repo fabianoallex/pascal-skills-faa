@@ -30,6 +30,7 @@ it), never through another library's `external/` folder.
 | UTF-8 bytes to string that refuses to corrupt text on a non-UTF-8 code page | pascal-common-faa (1.4.0+) | `PascalCommon.Utf8` (`PcTryUtf8BytesToString`) | moved there from pascal-db-faa and pascal-api-infra-faa, which keep wrappers |
 | W3C Trace Context: trace/span ids, `traceparent`/`tracestate` parse and format | pascal-common-faa (1.5.0+) | `PascalCommon.TraceContext` (`PcNewTraceId`, `PcTryParseTraceParent`...) | ids from the OS random source; the base of pascal-api-infra-faa's observability (metrics and spans come later) |
 | Metrics: counter, gauge, histogram, registry, Prometheus `/metrics` text | pascal-common-faa (1.6.0+) | `PascalCommon.Metrics` (`PcMetrics`, `PcPrometheusText`) | OpenTelemetry names converted to Prometheus ones; lock-free recording on a series |
+| Spans (OpenTelemetry-style): tracer, current span per thread, sampling, batch processor | pascal-common-faa (1.7.0+) | `PascalCommon.Tracing` (`TPcTracing`, `IPcSpan`, `IPcSpanExporter`) | the OTLP/HTTP exporter is pascal-api-infra-faa's `PascalApi.Otlp`; a library instruments with `StartSpan` and needs no exporter |
 | String to UTF-8 bytes, MD5 hex, UTF-8-safe prefix | pascal-api-infra-faa | `PascalApi.Text` | |
 | AMQP 0-9-1 client and an embeddable broker (no RabbitMQ needed) | pascal-amqp-faa | `AMQP.*` | |
 | Redis client (RESP2/RESP3, pool, pipelining, Pub/Sub, Streams, TLS) | pascal-redis-faa | `Redis.*` | |
