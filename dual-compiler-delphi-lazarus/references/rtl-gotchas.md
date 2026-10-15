@@ -45,6 +45,11 @@ If you find a new gotcha that isn't listed here, it's worth adding it in this sa
 ## Memory / interfaces
 
 - **An object constructed inline as an interface-typed argument, in a call that raises an exception, leaks one block on FPC 3.2.2** (caught via heaptrc): writing something like `Foo.Bar(TMyObject.Create)` where `Bar` raises before the interface takes ownership of the object can leave the temporary object unfreed on this FPC version. Fix: assign the object to a local variable (of the interface type) before passing it into the call, instead of constructing it inline. — [`pascal-dfe-broker`](https://github.com/fabianoallex/pascal-dfe-broker)
+- **A method that assigns to a field of `Self`, called on a `const` record parameter, leaks on FPC 3.2.2 for Linux and changes the caller's record on FPC 3.2.2 for Windows.** Measured with a record whose only field is a `string`, and whose method does `FSQL := StringReplace(FSQL, ...); Result := Self;`. The method was called as `ASql.ReplaceLiteral(...)` inside `procedure P(const ASql: TSqlRec)`:
+  - On Linux (x86_64 and i386, heaptrc), each call leaked one block: the string after the replacement. When the caller held the original string in two variables, its reference count went from 2 to 1.
+  - On Win64, nothing leaked, but the caller's variable came back with the replaced text, even though it was passed as `const`.
+
+  Neither target gives a warning. The results were the same whether the argument was a temporary (`P(Load(Name))`) or a variable, whether `P` was a class static overload or a plain procedure, and with a second field in the record (16 bytes). With no actual change there's no leak: a `StringReplace` that finds nothing returns the same string. So a test whose SQL lacks the tag passes with 0 leaks while the code path is still wrong. Fix: copy the parameter to a local and call the method on the copy (`L := ASql; L.ReplaceLiteral(...)`), or declare the parameter `constref`. Both gave 0 leaks on Linux. Not measured: Delphi, other FPC versions, other CPUs. — found in [`pascal-api-infra-faa`](https://github.com/fabianoallex/pascal-api-infra-faa), `src/PascalApi.Tenancy.pas` (`TTenantFilter.Prepare`), on `TSQLResult` from [`pascal-db-faa`](https://github.com/fabianoallex/pascal-db-faa)
 
 ## Generics / RTL collections
 
