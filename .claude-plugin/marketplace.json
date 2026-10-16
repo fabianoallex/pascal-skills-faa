@@ -1,0 +1,15 @@
+{
+  "name": "pascal-skills-faa",
+  "description": "Claude Code skills for Object Pascal (Delphi and Lazarus/FPC) work.",
+  "owner": {
+    "name": "Fabiano Alex Arndt",
+    "url": "https://github.com/fabianoallex"
+  },
+  "plugins": [
+    {
+      "name": "pascal-skills-faa",
+      "source": "./",
+      "description": "Dual-compiler Delphi/Lazarus skill and the index of the *-faa libraries."
+    }
+  ]
+}

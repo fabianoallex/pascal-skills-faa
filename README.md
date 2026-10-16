@@ -85,7 +85,16 @@ Older Delphi versions in particular may diverge from what's documented here — 
 
 ## Using the skill
 
-Drop (or symlink) the skill folder into a project's `.claude/skills/` directory, or into your personal `~/.claude/skills/`, and Claude Code will pick it up automatically whenever the conversation touches dual-compiler Delphi/Lazarus work — starting a new dual-compiler project or debugging a compiler-specific bug. Porting an existing single-compiler codebase is deliberately not a goal: every project has its own particulars, so the skill's gotcha catalog can help there, but it makes no promise about it.
+This repository is a Claude Code plugin and its own marketplace. Install it once, at user scope, and the skill is available in every project, including one that only uses the `*-faa` libraries as git submodules:
+
+```
+/plugin marketplace add fabianoallex/pascal-skills-faa
+/plugin install pascal-skills-faa@pascal-skills-faa
+```
+
+On Claude Code 2.1.275 or later, one line does both: `/plugin install pascal-skills-faa --marketplace fabianoallex/pascal-skills-faa`. The plugin has no `version` on purpose: every commit to `main` is an update (`/plugin marketplace update pascal-skills-faa`). Inside the plugin the skill is named `pascal-skills-faa:dual-compiler-delphi-lazarus`.
+
+Without the plugin, drop (or symlink) the skill folder into a project's `.claude/skills/` directory, or into your personal `~/.claude/skills/` (don't do both: the skill would load twice). Either way, Claude Code picks it up automatically whenever the conversation touches dual-compiler Delphi/Lazarus work — starting a new dual-compiler project or debugging a compiler-specific bug. Porting an existing single-compiler codebase is deliberately not a goal: every project has its own particulars, so the skill's gotcha catalog can help there, but it makes no promise about it.
 
 ## Contributing
 
