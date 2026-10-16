@@ -2,6 +2,8 @@
 
 Reusable [Claude Code](https://docs.claude.com/en/docs/claude-code) skills for Object Pascal work — starting with everything needed to build and maintain Delphi/Lazarus **dual-compiler** projects.
 
+**Reading it yourself, not through Claude?** The skills are written for an agent. For a walkthrough meant for people — the layout, project files, code rules, mirrored tests and CI of an application on both compilers, and how these skills fit in — read pascal-api-infra-faa's guide [Your project on both compilers](https://github.com/fabianoallex/pascal-api-infra-faa/blob/main/docs/guide/dual-compiler.md).
+
 ## How this skill approaches things
 
 A skill is instructions and context Claude loads when a task matches — not a black box, and not a rulebook to obey blindly. Three things this one deliberately does because of that:
@@ -96,6 +98,8 @@ This repository is a Claude Code plugin and its own marketplace. Install it once
 On Claude Code 2.1.275 or later, one line does both: `/plugin install pascal-skills-faa --marketplace fabianoallex/pascal-skills-faa`. The plugin has no `version` on purpose: every commit to `main` is an update (`/plugin marketplace update pascal-skills-faa`). Inside the plugin the skill is named `pascal-skills-faa:dual-compiler-delphi-lazarus`.
 
 Without the plugin, drop (or symlink) the skill folder into a project's `.claude/skills/` directory, or into your personal `~/.claude/skills/` (don't do both: the skill would load twice). Either way, Claude Code picks it up automatically whenever the conversation touches dual-compiler Delphi/Lazarus work — starting a new dual-compiler project or debugging a compiler-specific bug. Porting an existing single-compiler codebase is deliberately not a goal: every project has its own particulars, so the skill's gotcha catalog can help there, but it makes no promise about it.
+
+What to set up in your own project so the skills have something to work with (a `CLAUDE.md` with your decisions, both builds, mirrored tests): [Your project on both compilers](https://github.com/fabianoallex/pascal-api-infra-faa/blob/main/docs/guide/dual-compiler.md), section "Working with Claude Code".
 
 ## Contributing
 
