@@ -29,6 +29,7 @@ It triggers automatically whenever the conversation touches this territory — s
 | Skill | What it covers |
 |---|---|
 | [`dual-compiler-delphi-lazarus`](dual-compiler-delphi-lazarus/SKILL.md) | Everything described above, plus full reference docs in [`references/`](dual-compiler-delphi-lazarus/references/) and runnable tooling in [`scripts/`](dual-compiler-delphi-lazarus/scripts/) and [`assets/`](dual-compiler-delphi-lazarus/assets/) |
+| [`using-faa-libraries`](using-faa-libraries/SKILL.md) | Building an application on the `*-faa` libraries (common, jsonmapper, db, api-infra, amqp, redis, pipes): one copy of each and the Lazarus package rule, the minimum-version matrix, the shared thread pool and shutdown, errors from callbacks, and for each library the doc to read first and the traps its authors measured. It routes to each library's own docs instead of repeating them |
 
 More skills will land here as they get extracted from ongoing work — refactoring patterns, packaging/build tooling, component-library conventions, etc.
 

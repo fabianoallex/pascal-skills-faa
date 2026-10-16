@@ -9,7 +9,7 @@
     {
       "name": "pascal-skills-faa",
       "source": "./",
-      "description": "Dual-compiler Delphi/Lazarus skill and the index of the *-faa libraries."
+      "description": "Dual-compiler Delphi/Lazarus skill, and a skill for building applications on the *-faa libraries."
     }
   ]
 }

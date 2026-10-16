@@ -1,7 +1,7 @@
 {
   "name": "pascal-skills-faa",
   "displayName": "Pascal Skills FAA",
-  "description": "Skills for Object Pascal work: one codebase that builds and passes its tests on both Delphi and Lazarus/FPC, and the index of the *-faa libraries.",
+  "description": "Skills for Object Pascal work: one codebase that builds and passes its tests on both Delphi and Lazarus/FPC, and building applications on the *-faa libraries.",
   "author": {
     "name": "Fabiano Alex Arndt",
     "url": "https://github.com/fabianoallex"
@@ -9,5 +9,5 @@
   "homepage": "https://github.com/fabianoallex/pascal-skills-faa",
   "repository": "https://github.com/fabianoallex/pascal-skills-faa",
   "keywords": ["delphi", "lazarus", "freepascal", "fpc", "object-pascal", "dual-compiler"],
-  "skills": ["./dual-compiler-delphi-lazarus"]
+  "skills": ["./dual-compiler-delphi-lazarus", "./using-faa-libraries"]
 }
