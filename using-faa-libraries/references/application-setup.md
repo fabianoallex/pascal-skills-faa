@@ -73,22 +73,22 @@ are enough.
 ## The minimum-version matrix
 
 The application's copy of each library has to satisfy **every** library that uses it, so its
-pascal-common-faa is at least the highest minimum below. As of 2026-10-16:
+pascal-common-faa is at least the highest minimum below. As of 2026-10-18:
 
 | Library (latest tag) | needs pascal-common-faa | needs also |
 |---|---|---|
-| pascal-common-faa (v1.10.0) | — | — |
+| pascal-common-faa (v1.16.0) | — | — |
 | pascal-jsonmapper-faa (v0.6.0) | — | — |
 | pascal-db-faa (v0.15.0) | 1.8.0 | — |
-| pascal-api-infra-faa (v0.14.0) | 1.8.1 | pascal-db-faa 0.15.0, pascal-jsonmapper-faa 0.6.0 |
+| pascal-api-infra-faa (v0.15.0) | 1.16.0 | pascal-db-faa 0.15.0, pascal-jsonmapper-faa 0.6.0; pascal-redis-faa 0.2.0 only for `src/redis` (the Redis key store) |
 | pascal-amqp-faa (v0.4.1) | 1.8.0 | — |
 | pascal-redis-faa (v0.2.0) | 1.8.0 | — |
 | pascal-pipes-faa (v0.3.0) | 1.0.0 | — |
 
-Some optional pieces need more than the minimum. pascal-api-infra-faa's samples use 1.9.0's
-string normalizers (`TOptionals.Trim`/`Upper`) and 1.10.0's `PcSetSafeLogUtf8`. Use the latest
-pascal-common-faa unless something pins it: within a major version it only adds (strict semver,
-its README).
+pascal-api-infra-faa 0.15.0 sets the bar: it needs 1.16.0 (`PascalCommon.Random` and
+`PascalCommon.AesGcm`, for its JWT signing keys), even if the application never uses them. Use the
+latest pascal-common-faa unless something pins it: within a major version it only adds (strict
+semver, its README).
 
 **How a too-old copy shows:** the build stops with the library's own message, for example
 `pascal-amqp-faa needs pascal-common-faa 1.8.0 or later`. FPC shows `Fatal: (2022) User defined:

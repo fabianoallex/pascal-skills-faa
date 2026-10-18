@@ -110,6 +110,12 @@ are decision records, for why, not for how.
 - **Multi-tenancy**: every repository query goes through `TTenantFilter.Prepare`. An unbound
   `:TENANT_ID` is a silent 404 on SQLdb/SQLite. The tenant comes only from the token's claim
   (`multitenancy.md`).
+- **JWT signing keys** (0.15.0+, `docs/guide/jwt-keys.md`): sign through
+  `TJwtMiddleware.Sign`, so the login signs with the key the middleware verifies. A rotating ring
+  rotates on a request, not on a timer. To revoke a leaked generated key, delete every key of its
+  scope; deleting only the signing key makes the previous one sign again (tested). Rotate the
+  master key in two steps (add it second, then first). Redis as the store needs persistence and
+  `noeviction`, or a restart logs everyone out. Every instance must share `MaxTokenSeconds`.
 - **Metrics**: the route template as the label, a description on every metric
   (`observability.md`, step 7).
 - **MCP**: the endpoint registers after every documented route, and the Horse provider must be
