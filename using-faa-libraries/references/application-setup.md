@@ -80,14 +80,14 @@ pascal-common-faa is at least the highest minimum below. As of 2026-10-18:
 | pascal-common-faa (v1.17.0) | — | — |
 | pascal-jsonmapper-faa (v0.6.0) | — | — |
 | pascal-db-faa (v0.15.0) | 1.8.0 | — |
-| pascal-api-infra-faa (v0.15.0; `main` needs 1.17.0) | 1.16.0 | pascal-db-faa 0.15.0, pascal-jsonmapper-faa 0.6.0; pascal-redis-faa 0.2.0 only for `src/redis` (the Redis key store) |
+| pascal-api-infra-faa (v0.16.0) | 1.17.0 | pascal-db-faa 0.15.0, pascal-jsonmapper-faa 0.6.0; pascal-redis-faa 0.2.0 only for `src/redis` (the Redis key store) |
 | pascal-amqp-faa (v0.4.1) | 1.8.0 | — |
 | pascal-redis-faa (v0.2.0) | 1.8.0 | — |
 | pascal-pipes-faa (v0.3.0) | 1.0.0 | — |
 
-pascal-api-infra-faa sets the bar: 0.15.0 needs 1.16.0 (`PascalCommon.Random` and
-`PascalCommon.AesGcm`, for its JWT signing keys), and its `main` needs 1.17.0 (`PascalCommon.Crypto`,
-which its `PascalApi.Crypto` wraps), even if the application never uses them. Use the
+pascal-api-infra-faa sets the bar: 0.16.0 needs 1.17.0 (`PascalCommon.Random` and
+`PascalCommon.AesGcm` for its JWT signing keys, `PascalCommon.Crypto`, which its `PascalApi.Crypto`
+wraps), even if the application never uses them; 0.15.0 needed 1.16.0. Use the
 latest pascal-common-faa unless something pins it: within a major version it only adds (strict
 semver, its README).
 
