@@ -91,6 +91,15 @@ are decision records, for why, not for how.
 
 - **JSON out through `TJsonSend.Send`, never `Res.Send(string)`.** On Delphi, accented text
   arrived broken (4 of 65 HTTP checks, Delphi 12 Win32/Win64). The unit tests can't see it.
+- **DTOs: the interface mirrors the class, read-only** (the convention since 0.18.0,
+  `docs/guide/dtos-json.md` step 1, `PascalApi.Dto`'s header). Each published property of the
+  class gets a property of the same name and type in the interface, through its getter
+  (`property Name: string read GetName;`), so code that sees only the interface sees every
+  member; the mapper reads only the class, so the JSON doesn't change (probe, FPC). Fill a DTO
+  through its class **while an interface variable holds it** (`Result := LCity;` then
+  `LCity.Name := ...`); code that receives the interface builds a new DTO for a different value,
+  never `as TObject`. 0.18.0 removed the setters of the paged bases (`IFindPaginationDTOBase`,
+  `IResponsePaginationDTOBase`): `LFind.Page := ...` on the interface no longer compiles.
 - **Configure every middleware once, before `Listen`.** On FPC a Horse callback is a plain
   procedure, so each middleware keeps one configuration per process.
 - **`TLoggerMiddleware` first** (`runtime.md`: a middleware's exception on FPC).
