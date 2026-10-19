@@ -125,8 +125,12 @@ LQuery.Params.OptBooleans['ACTIVE'] := APatch.Active;
   and `[EMAIL {] :EMAIL, [} EMAIL]` in the values; absent, the database writes its default (NULL).
 - `IOptNullXxx` for a PATCH member that may be cleared (`OptNullStrings`: Null writes NULL);
   `IOptXxx` for one that can't be null.
-- `Booleans`/`OptBooleans` into an integer column work on every engine the contract suite runs
-  (pascal-db-faa `Params_EveryType_RoundTrip`).
+- **Not `Booleans`/`OptBooleans` into an `INTEGER` flag column**: PostgreSQL refuses a boolean
+  parameter there ("column ... is of type integer but expression is of type boolean"; SQLdb,
+  PostgreSQL 17, measured in pascal-agenda-faa 2026-10-19), while SQLite takes it, so a SQLite-only
+  test suite never shows it. Bind `Integers`/`OptIntegers` (pascal-agenda-faa's `OptFlag`:
+  absent stays absent, a value becomes 1 or 0). Reading is fine: `IQueryResult.Booleans` reads an
+  INTEGER 1 as True (pascal-db-faa's contract suite checks only that direction).
 
 ## 4. Defaults and merges
 
