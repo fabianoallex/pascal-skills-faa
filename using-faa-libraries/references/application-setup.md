@@ -77,15 +77,15 @@ pascal-common-faa is at least the highest minimum below. As of 2026-10-19:
 
 | Library (latest tag) | needs pascal-common-faa | needs also |
 |---|---|---|
-| pascal-common-faa (v1.19.0) | — | — |
-| pascal-jsonmapper-faa (v0.6.0) | — | — |
-| pascal-db-faa (v0.15.0) | 1.8.0 | — |
-| pascal-api-infra-faa (v0.18.0) | 1.17.0 | pascal-db-faa 0.15.0, pascal-jsonmapper-faa 0.6.0; pascal-redis-faa 0.2.0 only for `src/redis` (the Redis key store) |
+| pascal-common-faa (v1.20.0) | — | — |
+| pascal-jsonmapper-faa (v0.7.0) | — | — |
+| pascal-db-faa (v0.16.0) | 1.8.0 | — |
+| pascal-api-infra-faa (v0.19.0) | 1.17.0 | pascal-db-faa 0.15.0, pascal-jsonmapper-faa 0.7.0 (0.6.0 until 0.18.0); pascal-redis-faa 0.2.0 only for `src/redis` (the Redis key store) |
 | pascal-amqp-faa (v0.4.1) | 1.8.0 | — |
 | pascal-redis-faa (v0.2.0) | 1.8.0 | — |
 | pascal-pipes-faa (v0.3.0) | 1.0.0 | — |
 
-pascal-api-infra-faa sets the bar: 0.16.0 to 0.18.0 need 1.17.0 (`PascalCommon.Random` and
+pascal-api-infra-faa sets the bar: 0.16.0 to 0.19.0 need 1.17.0 (`PascalCommon.Random` and
 `PascalCommon.AesGcm` for its JWT signing keys, `PascalCommon.Crypto`, which its `PascalApi.Crypto`
 wraps), even if the application never uses them; 0.15.0 needed 1.16.0. Use the
 latest pascal-common-faa unless something pins it: within a major version it only adds (strict
@@ -100,7 +100,8 @@ step 5).
 pascal-api-infra-faa's `.lpk`, so on Delphi:
 
 - a mapper before 0.5.0 fails on the missing `EJsonInputError`;
-- 0.5.0 compiles silently, without 0.6.0's exact `Currency` on FPC.
+- 0.5.0 compiles silently, without 0.6.0's exact `Currency` on FPC;
+- before 0.7.0, pascal-api-infra-faa 0.19.0 fails on the missing `TUtcDateTime`.
 
 Check the mapper's version by hand when upgrading pascal-api-infra-faa (its `CLAUDE.md`,
 "Dependencies").
