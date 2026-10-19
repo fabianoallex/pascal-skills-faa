@@ -3,18 +3,29 @@
 How a repository on pascal-common-faa, pascal-db-faa and pascal-api-infra-faa writes INSERTs,
 PATCHes and filtered lists so that an optional member is never opened with an `if`. Proven in
 pascal-agenda-faa's four repositories (services, professionals, customers, users; 2026-10-19,
-323 HTTP checks unchanged, `if` 83 -> 54, `HasValue` 59 -> 37) and in pascal-api-infra-faa's
-sample 02. Each library's own doc has the details: pascal-db-faa `docs/optionals.md` (optionals
-as parameters, partial updates), pascal-common-faa's README (normalizers, `Map`), pascal-api-infra-faa
-`docs/guide/dtos-json.md` and `database.md`.
+323 HTTP checks unchanged, `if` 83 -> 54, `HasValue` 59 -> 37), then moved to the libraries'
+validation (pascal-common-faa 1.21.0, pascal-api-infra-faa 0.20.0; 333 checks), and in
+pascal-api-infra-faa's sample 02. Each library's own doc has the details: pascal-db-faa `docs/optionals.md` (optionals
+as parameters, partial updates), pascal-common-faa's README (normalizers, `Map`, validators),
+pascal-api-infra-faa `docs/guide/dtos-json.md`, `errors.md` and `database.md`.
 
 ## The three states, and who handles each
 
-| A member that... | is | `Map`/`Normalize` | `OptXxx` parameter | its SQL block |
-|---|---|---|---|---|
-| didn't come | Undefined | not called, stays Undefined | not bound | removed (`ProcessTag(.., False)`) |
-| came as `null` (`IOptNullXxx`) | Null | not called, stays Null | binds NULL | kept |
-| came with a value | From(X) | called: the normalized value | binds the value | kept |
+| A member that... | is | `Map`/`Normalize` | `TPcValidation.Check` | `OptXxx` parameter | its SQL block |
+|---|---|---|---|---|---|
+| didn't come | Undefined | not called, stays Undefined | not checked | not bound | removed (`ProcessTag(.., False)`) |
+| came as `null` (`IOptNullXxx`) | Null | not called, stays Null | not checked | binds NULL | kept |
+| came with a value | From(X) | called: the normalized value | checked | binds the value | kept |
+
+## 0. The document's limits, at the edge
+
+What `TApiSchema.Describe` declares (`MinLength`, `MaxLength`, `Enum`, `Minimum`, `Maximum`) is
+enforced when the handler reads the DTO: `THorseBody.Read<I>(AReq)` for a body,
+`THorseQueryParams.Read<I>(AReq)` for the query string (pascal-api-infra-faa 0.20.0). A limit is
+written once, in the `Describe`; the repository never repeats it. The edge checks the value **as
+it came** (before any normalizer: `" rn"` is 3 characters for a `MaxLength(2)`) and answers
+before the repository, so a request that breaks a limit and a rule hears of the limit only.
+`Pattern` is documented, not enforced: write the format as an application rule.
 
 ## 1. Normalize with the application's factory, inside the optionals
 
@@ -46,31 +57,42 @@ LName := TNorm.DisplayName.Apply(AService.Name);                 // a required, 
 - **FPC ambiguity:** `TOptNullString.Undefined`/`Null`/`From(...)` answer the class, which fits
   every overload of `Normalize` (and of the validators below): pass a typed variable.
 
-## 2. Validate apart: checks that change nothing, one overload per shape
+## 2. Validate apart: the application's rules through `TPcValidation`
+
+The rules the document can't say live in a factory that inherits pascal-common-faa's
+`TPcStringValidators` (`Required`, `MinLength`, `MaxLength`, `OneOf`, `FromFunc`, `All`), the
+partner of `TNorm`; numbers use `TPcIntegerValidators` (`MultipleOf`, `Range`...) and
+`TPcCurrencyValidators` (`MaxDecimals`) directly:
 
 ```pascal
-procedure ValidateEmail(const AEmail: string); overload;          // required: always checked
-procedure ValidateEmail(const AEmail: IOptString); overload;      // checked when it came
-procedure ValidateEmail(const AEmail: IOptNullString); overload;  // when it came with a value
-
-procedure ValidateEmail(const AEmail: IOptNullString);
-begin
-  if AEmail.HasValue and not AEmail.IsNull then
-    ValidateEmail(AEmail.Value);
+TValid = class(TPcStringValidators)
+public
+  class function DisplayName: IPcStringValidator; static;   // Required: something besides blanks
+  class function Email: IPcStringValidator; static;         // FromFunc(CheckEmail)
+  class function Phone: IPcStringValidator; static;         // FromFunc(CheckPhone)
 end;
 
-LEmail := TOptionals.Normalize(APatch.Email, TNorm.Email);
-ValidateEmail(LEmail);                 // a 400 touches nothing: before the transaction
-ValidateDuration(APatch.DurationMinutes);
+LName := TOptionals.Normalize(APatch.Name, TNorm.DisplayName);
+LCheck := TPcValidation.Create;                 // a record: no try/finally
+LCheck.Check('name', LName, TValid.DisplayName);              // string, IOpt, INull, IOptNull
+LCheck.Check('durationMinutes', APatch.DurationMinutes, TPcIntegerValidators.MultipleOf(5));
+LCheck.Check('price', APatch.Price, TPcCurrencyValidators.MaxDecimals(2));
+CheckProfessional(APatch.ProfessionalId, LCheck);  // a rule with context: Fail inside
+LCheck.RaiseIfAny;       // EPcValidationError: one 400 listing every failing field
 ```
 
-- The `if HasValue` lives inside the rule, once; the repository calls every rule the same way.
-- A check that needs the database (the professional exists in this tenant) is a method of the
-  repository, with the same overloads.
-- An alternative when a check can also normalize: write it as `function(const AValue: T): T` that
-  raises, and take it with `Map` (`APatch.Email.Map(CheckEmail)`); `Map` calls it only when the
-  member came. pascal-agenda-faa used that first, then chose the split above, which keeps the
-  library guide's shape and makes each step testable alone.
+- One `Check` per member whatever its shape; the "absent or null: not checked" rule is the
+  library's, so the application writes each rule once (pascal-agenda-faa had three overloads per
+  rule before).
+- A rule that needs the database or another member is a method or a plain `if` that calls
+  `LCheck.Fail(AField, ACode, AMessage)`, taking the collector as `var`. Check `LCheck.IsValid`
+  before a cross-member rule that needs both members valid (`HasFailed(AField)` asks about one).
+- Field names are the JSON names; the codes are the library's (`required`, `too_short`,
+  `out_of_range` for a `Minimum`+`Maximum` pair, `not_multiple`, `too_many_decimals`...) or the
+  application's (`invalid_email`). The 400: `{"error": <first message>, "code":
+  "invalid_fields", "fields": [{field, code, message}]}`. A single business refusal (`own_account`)
+  stays an `EValidationException` with its code.
+- Validate **after** normalizing (the rule sees what will be stored) and before the transaction.
 
 ## 3. The optional is bound as it is, next to its tag
 
@@ -84,8 +106,7 @@ WHERE ID = :ID AND ${TENANT}
 
 ```pascal
 LName := TOptionals.Normalize(APatch.Name, TNorm.DisplayName);
-ValidateName(LName);
-ValidateDuration(APatch.DurationMinutes);
+... // TPcValidation, step 2
 TTenantFilter.Prepare(LQuery, FScope, FScope.Factory.SqlLoader['SERVICE.UPDATE']
   .ProcessTag('NAME', LName.HasValue)
   .ProcessTag('DURATION', APatch.DurationMinutes.HasValue)
@@ -127,7 +148,6 @@ string. A literal search: `PdbLikeContains(PcFoldForSearch(AFind.Search.Value))`
 
 ## Where an `if` stays, on purpose
 
-- Inside a validation rule, once per shape of member (that is the rule).
 - A conversion to another type: `Map` keeps the type, so an `IOptCurrency` price stored as an
   `Int64` of cents is `if LPrice.HasValue then Params.Int64s[...] := CentsOf(LPrice.Value)`.
 - A business decision across members (the owner can't demote or deactivate themselves).
