@@ -1,4 +1,4 @@
-# Repository patterns: optionals, checks and SQL tags without `if HasValue`
+# Repository patterns: normalize, validate, bind the optionals (no `if HasValue`)
 
 How a repository on pascal-common-faa, pascal-db-faa and pascal-api-infra-faa writes INSERTs,
 PATCHes and filtered lists so that an optional member is never opened with an `if`. Proven in
@@ -14,59 +14,63 @@ as parameters, partial updates), pascal-common-faa's README (normalizers, `Map`)
 |---|---|---|---|---|
 | didn't come | Undefined | not called, stays Undefined | not bound | removed (`ProcessTag(.., False)`) |
 | came as `null` (`IOptNullXxx`) | Null | not called, stays Null | binds NULL | kept |
-| came with a value | From(X) | called: the rule's result, or its exception | binds the value | kept |
+| came with a value | From(X) | called: the normalized value | binds the value | kept |
 
-## 1. A check is a function from the value to the value to store
+## 1. Normalize with the application's factory, inside the optionals
 
-```pascal
-// The shape of TPcStringFunc: normalizes, and raises a 400 for a bad value.
-function CheckEmail(const AEmail: string): string;
-begin
-  Result := NormalizeEmail(AEmail);
-  if Result = '' then
-    raise EValidationException.Create('"email" is not an email address.');
-end;
-
-function CheckDuration(const AMinutes: Integer): Integer;   // TPcIntegerFunc
-begin
-  if (AMinutes < 5) or (AMinutes > 480) or (AMinutes mod 5 <> 0) then
-    raise EValidationException.Create('"durationMinutes" must be a multiple of 5 from 5 to 480.');
-  Result := AMinutes;
-end;
-```
-
-- A required member calls it directly: `LName := CheckName(AService.Name)`.
-- An optional member goes through `Map`: `LEmail := APatch.Email.Map(CheckEmail)`. No `if`: absent
-  stays absent, `null` stays `null`, a value is checked.
-- **The signature must match exactly**, `const` included: `function(const AValue: string): string`
-  (also `Integer`, `Int64`, `Currency`...). It is a plain function pointer, not a method (FPC 3.2.2
-  has no closures, and `of object` would refuse a Delphi caller's plain function): write the
-  checks as unit-level functions.
-- `Map` is for checks (it may raise); `Normalize` with a factory normalizer (`TNorm.CityName`) is
-  for pure transformations. pascal-api-infra-faa's sample 02 keeps limits out of normalizers so a
-  normalizer never hides a client's mistake; a check that raises doesn't hide it.
-
-## 2. A rule that needs context is a normalizer object
-
-When the rule needs more than the value (a hash's iterations, the tenant's scope to look a row
-up), write an `IPcStringNormalizer` that carries it, and take it with `Normalize`:
+The application's normalizers live in one factory that inherits pascal-common-faa's
+`TPcStringNormalizers`, as pascal-api-infra-faa's sample 02 and its guide "DTOs and JSON" do:
 
 ```pascal
-type
-  TExistingProfessional = class(TInterfacedObject, IPcStringNormalizer)
-  private
-    FScope: TTenantDataScope;
-  public
-    constructor Create(const AScope: TTenantDataScope);
-    function Apply(const AValue: string): string;   // the id, or a 400
-  end;
+TNorm = class(TPcStringNormalizers)        // Trim, Lower, FoldForSearch, FromFunc, Chain inherited
+public
+  class function DisplayName: IPcStringNormalizer; static;   // Chain([Trim, CollapseSpaces])
+  class function Email: IPcStringNormalizer; static;         // Chain([Trim, Lower])
+  class function Phone: IPcStringNormalizer; static;         // FromFunc(PhoneOf)
+end;
 
-LProfessional := APatch.ProfessionalId.Normalize(TExistingProfessional.Create(FScope));
-LHash := APatch.Password.Normalize(THashPassword.Create(FIterations));
+LName := TOptionals.Normalize(APatch.Name, TNorm.DisplayName);   // absent stays absent
+LEmail := TOptionals.Normalize(APatch.Email, TNorm.Email);        // null stays null
+LName := TNorm.DisplayName.Apply(AService.Name);                 // a required, plain value
 ```
 
-`Normalize`'s parameter isn't `const` on purpose: the new object gets its reference and is freed
-with the call.
+- **A normalizer never refuses.** What can't be made right comes out as it went in (a phone with
+  letters) and the validation refuses it next; a normalizer that cut a name at 100 characters
+  would hide the client's mistake instead of answering 400.
+- Business rules (a phone, a CEP, a CPF) belong in the application's factory, not in the library
+  (`PascalCommon.Normalizers`' header).
+- A transformation that needs context (a password hash and its iterations) is a class implementing
+  `IPcStringNormalizer`, taken the same way: `TOptionals.Normalize(APatch.Password,
+  THashPassword.Create(FIterations))`. `Normalize`'s parameter isn't `const` on purpose: the new
+  object gets its reference and is freed with the call.
+- **FPC ambiguity:** `TOptNullString.Undefined`/`Null`/`From(...)` answer the class, which fits
+  every overload of `Normalize` (and of the validators below): pass a typed variable.
+
+## 2. Validate apart: checks that change nothing, one overload per shape
+
+```pascal
+procedure ValidateEmail(const AEmail: string); overload;          // required: always checked
+procedure ValidateEmail(const AEmail: IOptString); overload;      // checked when it came
+procedure ValidateEmail(const AEmail: IOptNullString); overload;  // when it came with a value
+
+procedure ValidateEmail(const AEmail: IOptNullString);
+begin
+  if AEmail.HasValue and not AEmail.IsNull then
+    ValidateEmail(AEmail.Value);
+end;
+
+LEmail := TOptionals.Normalize(APatch.Email, TNorm.Email);
+ValidateEmail(LEmail);                 // a 400 touches nothing: before the transaction
+ValidateDuration(APatch.DurationMinutes);
+```
+
+- The `if HasValue` lives inside the rule, once; the repository calls every rule the same way.
+- A check that needs the database (the professional exists in this tenant) is a method of the
+  repository, with the same overloads.
+- An alternative when a check can also normalize: write it as `function(const AValue: T): T` that
+  raises, and take it with `Map` (`APatch.Email.Map(CheckEmail)`); `Map` calls it only when the
+  member came. pascal-agenda-faa used that first, then chose the split above, which keeps the
+  library guide's shape and makes each step testable alone.
 
 ## 3. The optional is bound as it is, next to its tag
 
@@ -79,22 +83,23 @@ WHERE ID = :ID AND ${TENANT}
 ```
 
 ```pascal
-LName := APatch.Name.Map(CheckName);
-LDuration := APatch.DurationMinutes.Map(CheckDuration);
+LName := TOptionals.Normalize(APatch.Name, TNorm.DisplayName);
+ValidateName(LName);
+ValidateDuration(APatch.DurationMinutes);
 TTenantFilter.Prepare(LQuery, FScope, FScope.Factory.SqlLoader['SERVICE.UPDATE']
   .ProcessTag('NAME', LName.HasValue)
-  .ProcessTag('DURATION', LDuration.HasValue)
+  .ProcessTag('DURATION', APatch.DurationMinutes.HasValue)
   .ProcessTag('ACTIVE', APatch.Active.HasValue));
 LQuery.Params.OptStrings['NAME'] := LName;
-LQuery.Params.OptStrings['NAME_KEY'] := LName.Map(PcFoldForSearch);  // derived, same state
-LQuery.Params.OptIntegers['DURATION_MINUTES'] := LDuration;
+LQuery.Params.OptStrings['NAME_KEY'] := TOptionals.Normalize(LName, TNorm.FoldForSearch);  // derived, same state
+LQuery.Params.OptIntegers['DURATION_MINUTES'] := APatch.DurationMinutes;
 LQuery.Params.OptBooleans['ACTIVE'] := APatch.Active;
 ```
 
 - **The tag and the parameter go together, on the same `HasValue`.** A tag nobody processes loses
   only its markers and keeps its content: the `:PARAM` stays in the SQL, and an Undefined optional
   binds nothing (SQLdb: `Parameter "X" not found`; another driver may bind NULL silently).
-- Check through `Map` **before** the transaction: a 400 touches nothing.
+- Normalize and validate **before** the transaction: a 400 touches nothing.
 - The same for an INSERT with optional columns: `[EMAIL {] EMAIL, [} EMAIL]` in the column list
   and `[EMAIL {] :EMAIL, [} EMAIL]` in the values; absent, the database writes its default (NULL).
 - `IOptNullXxx` for a PATCH member that may be cleared (`OptNullStrings`: Null writes NULL);
@@ -122,7 +127,7 @@ string. A literal search: `PdbLikeContains(PcFoldForSearch(AFind.Search.Value))`
 
 ## Where an `if` stays, on purpose
 
-- Inside the check itself (that is the rule).
+- Inside a validation rule, once per shape of member (that is the rule).
 - A conversion to another type: `Map` keeps the type, so an `IOptCurrency` price stored as an
   `Int64` of cents is `if LPrice.HasValue then Params.Int64s[...] := CentsOf(LPrice.Value)`.
 - A business decision across members (the owner can't demote or deactivate themselves).

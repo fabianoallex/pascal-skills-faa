@@ -34,10 +34,10 @@ Check it before writing infrastructure an existing library already has.
    index) and its samples (`samples/01-api` uses every middleware, `samples/02-db` adds the
    database, `samples/03-tenants` multi-tenancy, `samples/04-messaging` Redis + AMQP + pipes).
    Copy the sample closest to the task instead of assembling the program from the reference.
-5. **A repository: INSERT, PATCH, filtered lists** → `references/repository-patterns.md`: checks
-   as value -> value functions taken by `Map`, rules with context as normalizer objects, the
-   optional bound as it is next to its `ProcessTag`; no `if HasValue`. Proven in
-   pascal-agenda-faa's repositories.
+5. **A repository: INSERT, PATCH, filtered lists** → `references/repository-patterns.md`:
+   normalize with the application's `TNorm` factory inside the optionals, validate apart (one
+   overload per shape of member), bind the optional as it is next to its `ProcessTag`; no
+   `if HasValue` in the repository. Proven in pascal-agenda-faa's repositories.
 6. **Something that looks like a library bug**: check the library's CHANGELOG for the version in
    use first. Several "bugs" were fixed behavior (a consumer exception lost before amqp 0.4.0, a
    duplicate JSON member accepted before jsonmapper 0.4.0, a `Currency` off by a few units on FPC
