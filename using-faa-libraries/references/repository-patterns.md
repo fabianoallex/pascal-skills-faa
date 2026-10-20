@@ -125,12 +125,17 @@ LQuery.Params.OptBooleans['ACTIVE'] := APatch.Active;
   and `[EMAIL {] :EMAIL, [} EMAIL]` in the values; absent, the database writes its default (NULL).
 - `IOptNullXxx` for a PATCH member that may be cleared (`OptNullStrings`: Null writes NULL);
   `IOptXxx` for one that can't be null.
-- **Not `Booleans`/`OptBooleans` into an `INTEGER` flag column**: PostgreSQL refuses a boolean
-  parameter there ("column ... is of type integer but expression is of type boolean"; SQLdb,
-  PostgreSQL 17, measured in pascal-agenda-faa 2026-10-19), while SQLite takes it, so a SQLite-only
-  test suite never shows it. Bind `Integers`/`OptIntegers` (pascal-agenda-faa's `OptFlag`:
-  absent stays absent, a value becomes 1 or 0). Reading is fine: `IQueryResult.Booleans` reads an
-  INTEGER 1 as True (pascal-db-faa's contract suite checks only that direction).
+- **A flag in a `SMALLINT`/`INTEGER` column: `Flags`/`OptFlags`/`NullFlags`/`OptNullFlags`,
+  never `Booleans`** (pascal-db-faa 0.17.0; `TQueryArgs.Flags` in pascal-api-infra-faa 0.21.0).
+  They take a Boolean and send the Integer 1/0. PostgreSQL refuses a Boolean parameter for an
+  integer column ("column ... is of type integer but expression is of type boolean"; a typed NULL
+  Boolean and `WHERE flag = :V` too) and an Integer one for a `BOOLEAN` column, on SQLdb, Zeos
+  and FireDAC, while SQLite takes both, so a SQLite-only suite never shows it (pascal-db-faa's
+  contract test `Params_Booleans_And_Flags`, gotcha 54, measured on every adapter and database
+  2026-10-20). `Booleans` only for the database's Boolean type. Before 0.17.0, a Boolean in an
+  integer column was also wrong without an error: SQLdb on Firebird stored -1, Zeos stored the
+  text `'Y'` on SQLite. Reading is fine everywhere: `IQueryResult.Booleans` reads an INTEGER 1
+  as True.
 
 ## 4. Defaults and merges
 
