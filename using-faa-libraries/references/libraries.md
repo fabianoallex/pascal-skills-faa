@@ -111,6 +111,15 @@ are decision records, for why, not for how.
   set to the proxies in front. Never `AReq.RemoteAddr` (empty with the console provider) or
   `ClientIp` (the address the client wrote). Guides: `observability.md`, step 3;
   `rate-limiting.md`, step 3.
+- **A Find DTO's plain members are required** (0.23.0): `THorseQueryParams.Read` answers a
+  missing one with a `required` field failure, as the document already said. A filter a client
+  may omit is an `IOptXxx`.
+- **`If-Match` and `Idempotency-Key` are calls in the handler, not middlewares**
+  (`docs/guide/concurrency.md`, 0.23.0): `RequireIfMatchSent` before the read,
+  `RequireIfMatch` after it, and a write that names the version read (`WHERE VERSION =
+  :VERSION`; zero rows is `RaisePreconditionFailed`). For the key, `THorseIdempotentRequest`:
+  `Complete` inside the handler's `try`, `Fail(E)` in its `except`. Both stores' tables are the
+  application's migrations.
 - **Query parameters through `ParseQueryInt`/`ParseQueryStr`**, never `TryStrToInt`. That one
   accepted `$3`, `0x3` and ` 3`, and on FPC wrapped `99999999999` to 1215752191 (`dtos-json.md`,
   step 7).
@@ -186,6 +195,12 @@ bloqueantes", "Transações", "Pub/Sub", "Streams e consumer groups". GUI sample
 - **Binary-safe by contract**: `TBytes` goes as is, and `string` overloads go as UTF-8.
 - **A fallback that catches `ERedisException` hides bugs**: catch only the connection's failures
   (not measured; `messaging.md`, step 6). Log keys, not values: Redis values are often tokens.
+- **A lock is `TRedisLock`** (0.3.0, README "Lock distribuído"), not a copy of the README's
+  snippets: `Acquire` answers `rlAcquired`, `rlBusy` or `rlUnavailable` (only
+  `ERedisConnectionLost`, `ERedisTimeout`, `ERedisPoolExhausted`; anything else raises), and
+  going on without the lock is the application's choice. It is a single-instance lock: where a
+  pause longer than the deadline matters, let something else (the database) have the final
+  word, as pascal-agenda-faa does.
 
 ## pascal-pipes-faa
 
