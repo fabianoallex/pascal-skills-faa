@@ -77,15 +77,15 @@ pascal-common-faa is at least the highest minimum below. As of 2026-10-21:
 
 | Library (latest tag) | needs pascal-common-faa | needs also |
 |---|---|---|
-| pascal-common-faa (v1.23.0) | — | — |
+| pascal-common-faa (v1.24.0) | — | — |
 | pascal-jsonmapper-faa (v0.7.0) | — | — |
 | pascal-db-faa (v0.17.0) | 1.8.0 | — |
-| pascal-api-infra-faa (v0.23.1) | 1.21.0 | pascal-db-faa 0.17.0 (0.15.0 until 0.20.x), pascal-jsonmapper-faa 0.7.0 (0.6.0 until 0.18.0); pascal-redis-faa 0.2.0 only for `src/redis` (the Redis key store) |
+| pascal-api-infra-faa (v0.24.0) | 1.24.0 (1.21.0 until 0.23.x: `PcBase64UrlDecodeStrict` reads a JWT signature now) | pascal-db-faa 0.17.0 (0.15.0 until 0.20.x), pascal-jsonmapper-faa 0.7.0 (0.6.0 until 0.18.0); pascal-redis-faa 0.2.0 only for `src/redis` (the Redis key store) |
 | pascal-amqp-faa (v0.4.1) | 1.8.0 | — |
 | pascal-redis-faa (v0.3.1) | 1.15.0 (1.8.0 until 0.3.0: `TRedisLock`'s token now comes from `PascalCommon.Random`) | — |
 | pascal-pipes-faa (v0.3.0) | 1.0.0 | — |
 
-pascal-api-infra-faa sets the bar: 0.20.x needs 1.21.0 (`PascalCommon.Validators`, which its error handler maps); 0.16.0 to 0.19.x need 1.17.0 (`PascalCommon.Random` and
+pascal-api-infra-faa sets the bar: 0.24.0 needs 1.24.0 (`PcBase64UrlDecodeStrict`, its JWT); 0.20.x to 0.23.x need 1.21.0 (`PascalCommon.Validators`, which its error handler maps); 0.16.0 to 0.19.x need 1.17.0 (`PascalCommon.Random` and
 `PascalCommon.AesGcm` for its JWT signing keys, `PascalCommon.Crypto`, which its `PascalApi.Crypto`
 wraps), even if the application never uses them; 0.15.0 needed 1.16.0. Use the
 latest pascal-common-faa unless something pins it: within a major version it only adds (strict
