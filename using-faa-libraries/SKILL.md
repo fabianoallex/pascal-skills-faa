@@ -38,7 +38,9 @@ Check it before writing infrastructure an existing library already has.
    normalize with the application's `TNorm` factory inside the optionals, validate apart (one
    overload per shape of member), bind the optional as it is next to its `ProcessTag`; no
    `if HasValue` in the repository. Proven in pascal-agenda-faa's repositories.
-6. **Something that looks like a library bug**: check the library's CHANGELOG for the version in
+6. **Writing Pascal code at all**: the style conventions are in the `dual-compiler-delphi-lazarus`
+   skill's `references/code-style.md` (e.g. `Result := Self;` first in a fluent method).
+7. **Something that looks like a library bug**: check the library's CHANGELOG for the version in
    use first. Several "bugs" were fixed behavior (a consumer exception lost before amqp 0.4.0, a
    duplicate JSON member accepted before jsonmapper 0.4.0, a `Currency` off by a few units on FPC
    before jsonmapper 0.6.0). If it is still there in the latest version, say so with the

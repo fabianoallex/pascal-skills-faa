@@ -26,7 +26,8 @@ When you need something concrete (a file name, a code snippet, a folder layout),
 3. **Before writing infrastructure, check what already exists**: JSON mapping, database access, a REST/Horse layer, JWT/SHA-256/HMAC, optional types, thread pools, atomics, Redis, AMQP, IPC. `references/faa-libraries.md` maps each need to a dual-compiler library that already passes its tests on both compilers (the `*-faa` family). Take it as a git submodule instead of writing a new copy. Setting one up and using it (versions, Lazarus packages, the shared thread pool, shutdown) is the `using-faa-libraries` skill, in the same plugin.
 4. **Specific bug/incompatibility**: check `references/rtl-gotchas.md` — there's a good chance the divergent behavior is already cataloged there, with symptom, root cause, and the fix that was used. For anything touching RTTI (`TypInfo`, `Rtti`, `TValue`, attributes), check `references/rtti-gotchas.md` first.
 5. **Writing or reviewing tests**: see "Mirrored tests" below.
-6. Whenever you resolve a new incompatibility (RTL, threading, encoding, sockets) that isn't in `references/rtl-gotchas.md` yet, suggest adding it there — that's how the list grew in the original projects (each one keeps a "gotchas found" section in its `CLAUDE.md` that gets fed over time).
+6. **Writing any Pascal code**: follow the conventions in `references/code-style.md` (e.g. in a chainable/fluent method, `Result := Self;` is the first statement, so an early `Exit` doesn't break the chain).
+7. Whenever you resolve a new incompatibility (RTL, threading, encoding, sockets) that isn't in `references/rtl-gotchas.md` yet, suggest adding it there — that's how the list grew in the original projects (each one keeps a "gotchas found" section in its `CLAUDE.md` that gets fed over time).
 
 ## Anatomy of a dual-compiler project
 
