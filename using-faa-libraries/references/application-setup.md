@@ -73,19 +73,19 @@ are enough.
 ## The minimum-version matrix
 
 The application's copy of each library has to satisfy **every** library that uses it, so its
-pascal-common-faa is at least the highest minimum below. As of 2026-11-02:
+pascal-common-faa is at least the highest minimum below. As of 2026-11-04:
 
 | Library (latest tag) | needs pascal-common-faa | needs also |
 |---|---|---|
-| pascal-common-faa (v1.27.0) | — | — |
+| pascal-common-faa (v1.29.0) | — | — |
 | pascal-jsonmapper-faa (v0.7.0) | — | — |
 | pascal-db-faa (v0.18.0) | 1.17.0 | — |
 | pascal-api-infra-faa (v0.31.0) | 1.26.0 (1.24.0 from 0.24.0: `PcBase64UrlDecodeStrict` reads a JWT signature; 1.21.0 until 0.23.x) | pascal-db-faa 0.17.0 (0.15.0 until 0.20.x), pascal-jsonmapper-faa 0.7.0 (0.6.0 until 0.18.0); pascal-redis-faa 0.2.0 only for `src/redis` (the Redis key store) |
 | pascal-amqp-faa (v0.6.0) | 1.27.0 (TCP and TLS, client and broker, from `PascalCommon.Transport*`; 1.8.0 from 0.2.0 until 0.5.0) | — |
-| pascal-redis-faa (v0.4.0) | 1.27.0 (TCP and TLS from `PascalCommon.Transport*`; 1.15.0 in 0.3.1, for `TRedisLock`'s token from `PascalCommon.Random`; 1.8.0 until 0.3.0) | — |
+| pascal-redis-faa (v0.5.0) | 1.29.0 for `Redis.Cache` (the store for `PascalCommon.Cache`) and for `pascal_redis_faa.lpk`, which compiles every unit; 1.27.0 for the rest on Delphi (TCP and TLS from `PascalCommon.Transport*`, since 0.4.0; 1.15.0 in 0.3.1, for `TRedisLock`'s token from `PascalCommon.Random`; 1.8.0 until 0.3.0) | — |
 | pascal-pipes-faa (v0.4.0) | 1.27.0 (TCP and TLS from `PascalCommon.Transport*`; 1.0.0 until 0.3.0) | — |
 
-pascal-amqp-faa 0.6.0, pascal-pipes-faa 0.4.0 and pascal-redis-faa 0.4.0 set the bar: they need 1.27.0, the release that brought the TCP and TLS transport they now run on. Before them pascal-api-infra-faa did, and its history shows why a minimum moves: 0.31.0 needs 1.26.0; 0.24.0 needed 1.24.0 (`PcBase64UrlDecodeStrict`, its JWT); 0.20.x to 0.23.x need 1.21.0 (`PascalCommon.Validators`, which its error handler maps); 0.16.0 to 0.19.x need 1.17.0 (`PascalCommon.Random` and
+pascal-redis-faa 0.5.0 sets the bar at 1.29.0 (its `Redis.Cache`, and its Lazarus package). Below it, pascal-amqp-faa 0.6.0, pascal-pipes-faa 0.4.0 and pascal-redis-faa 0.4.0 need 1.27.0, the release that brought the TCP and TLS transport they now run on. Before them pascal-api-infra-faa did, and its history shows why a minimum moves: 0.31.0 needs 1.26.0; 0.24.0 needed 1.24.0 (`PcBase64UrlDecodeStrict`, its JWT); 0.20.x to 0.23.x need 1.21.0 (`PascalCommon.Validators`, which its error handler maps); 0.16.0 to 0.19.x need 1.17.0 (`PascalCommon.Random` and
 `PascalCommon.AesGcm` for its JWT signing keys, `PascalCommon.Crypto`, which its `PascalApi.Crypto`
 wraps), even if the application never uses them; 0.15.0 needed 1.16.0. Use the
 latest pascal-common-faa unless something pins it: within a major version it only adds (strict
