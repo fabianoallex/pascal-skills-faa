@@ -53,7 +53,8 @@ each with `DefaultFilename` and `Prefer="True"`:
 Package names: `pascal_common_faa`, `pascal_common_faa_jsonmapper`, `pascaljsonmapper_pkg`,
 `pascal_db_faa` (+ `pascal_db_faa_sqldb`, `pascal_db_faa_zeos`), `pascal_api_infra_faa`,
 `pascal_amqp_faa` (+ `pascal_amqp_faa_server` for the embedded broker), `pascal_redis_faa`,
-`pipes_faa`. pascal-api-infra-faa's Horse units (`src/horse`) are **not** in its package (Horse
+`pipes_faa`, `pascal_search_faa` (+ `pascal_search_faa_meilisearch`,
+`pascal_search_faa_typesense`, `pascal_search_faa_outbox`). pascal-api-infra-faa's Horse units (`src/horse`) are **not** in its package (Horse
 has no Lazarus package): add `src/horse` and Horse's own `src` to the project's paths.
 
 Source: pascal-common-faa `docs/migrating.md`, steps 3 and 4 (written for library authors; the
@@ -65,7 +66,9 @@ Each library's `src` and pascal-common-faa's `src`. Also:
 
 - the bridge's `bridges/jsonmapper` and the mapper's `src`, for optionals in JSON;
 - pascal-api-infra-faa's `src/horse` and Horse's `src`;
-- amqp's `src\server` for the embedded broker.
+- amqp's `src\server` for the embedded broker;
+- pascal-search-faa's `adapters\meilisearch` or `adapters\typesense`, and `bridges\outbox`
+  (with pascal-db-faa's `src`) for the outbox bridge.
 
 The libraries use `uses` without unit scope names; the default scope names (`System;Winapi`)
 are enough.
@@ -79,11 +82,12 @@ pascal-common-faa is at least the highest minimum below. As of 2026-11-10:
 |---|---|---|
 | pascal-common-faa (v1.31.0) | — | — |
 | pascal-jsonmapper-faa (v0.7.0) | — | — |
-| pascal-db-faa (v0.18.0) | 1.17.0 | — |
+| pascal-db-faa (v0.20.1) | 1.29.0 from 0.19.0 (`PascalDb.Cache`, in its `.lpk`); 1.17.0 until 0.18.x | — |
 | pascal-api-infra-faa (v0.33.0) | 1.31.0 for every unit, on both compilers (`PascalCommon.Http`, which `PascalApi.HttpTransport` aliases, and `EPcTextEncoding`, which `PascalApi.Text` uses; in 0.32.x, 1.29.0 for `PascalApi.Tenancy` and the `.lpk`, 1.26.0 for the rest on Delphi; 1.26.0 in 0.31.0; 1.24.0 from 0.24.0: `PcBase64UrlDecodeStrict` reads a JWT signature; 1.21.0 until 0.23.x) | pascal-db-faa 0.17.0 (0.15.0 until 0.20.x), pascal-jsonmapper-faa 0.7.0 (0.6.0 until 0.18.0); pascal-redis-faa only for `src/redis` (the Redis key store, 0.2.0+) and a catalog cache in Redis (`TRedisCacheStore`, 0.5.0+; 0.6.0+ so the tag counters an unknown tenant id leaves expire, tested on 0.6.0 from 0.32.1) |
 | pascal-amqp-faa (v0.6.0) | 1.27.0 (TCP and TLS, client and broker, from `PascalCommon.Transport*`; 1.8.0 from 0.2.0 until 0.5.0) | — |
 | pascal-redis-faa (v0.6.0) | 1.29.0 for `Redis.Cache` (the store for `PascalCommon.Cache`) and for `pascal_redis_faa.lpk`, which compiles every unit; 1.27.0 for the rest on Delphi (TCP and TLS from `PascalCommon.Transport*`, since 0.4.0; 1.15.0 in 0.3.1, for `TRedisLock`'s token from `PascalCommon.Random`; 1.8.0 until 0.3.0) | — |
 | pascal-pipes-faa (v0.4.0) | 1.27.0 (TCP and TLS from `PascalCommon.Transport*`; 1.0.0 until 0.3.0) | — |
+| pascal-search-faa (v0.1.0) | 1.31.0 with an adapter (`PascalCommon.Http`, checked in `PascalSearch.Meilisearch` and `PascalSearch.Typesense`); 1.20.0 for the core and the mock alone | pascal-jsonmapper-faa 0.7.0; pascal-db-faa 0.18.0 only for the outbox bridge (`PascalSearch.Outbox`, checked in the unit; pascal-db-faa itself then raises pascal-common-faa to 1.29.0 from its 0.19.0) |
 
 pascal-api-infra-faa 0.33.0 sets the bar at 1.31.0 (`PascalCommon.Http`: its transport moved there, with https verified on both compilers). Below it, pascal-redis-faa (0.5.0, 0.6.0) and pascal-api-infra-faa 0.32.x need 1.29.0 (`PascalCommon.Cache`: the first's `Redis.Cache`, the second's tenant catalog, and both Lazarus packages). Below it, pascal-amqp-faa 0.6.0, pascal-pipes-faa 0.4.0 and pascal-redis-faa 0.4.0 need 1.27.0, the release that brought the TCP and TLS transport they now run on. Before them pascal-api-infra-faa did, and its history shows why a minimum moves: 0.31.0 needed 1.26.0; 0.24.0 needed 1.24.0 (`PcBase64UrlDecodeStrict`, its JWT); 0.20.x to 0.23.x need 1.21.0 (`PascalCommon.Validators`, which its error handler maps); 0.16.0 to 0.19.x need 1.17.0 (`PascalCommon.Random` and
 `PascalCommon.AesGcm` for its JWT signing keys, `PascalCommon.Crypto`, which its `PascalApi.Crypto`

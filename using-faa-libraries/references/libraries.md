@@ -217,3 +217,26 @@ bloqueantes", "Transações", "Pub/Sub", "Streams e consumer groups". GUI sample
   don't stop the build or the start. They show as `EPipeTls` on the first TLS connection.
 - **A client that connects and dies before the server accepts it is invisible** (no event).
 - A JSON DTO over a pipe: pascal-api-infra-faa `docs/guide/dtos-json.md`, step 10.
+
+## pascal-search-faa
+
+**Read:** `docs/README.md` (the guides, in order: getting started, schema and documents,
+writing and waiting, searching, errors, the mock, the outbox bridge, what each engine does
+differently), then `samples/01-outbox`. `docs/design.md` has the decisions (S1-S24, sections
+8-11); `docs/engine-findings.md` what Meilisearch 1.56.2 and Typesense 30.2 did when probed.
+
+- **`WaitFor` before searching what you wrote.** Meilisearch applies writes later; Typesense
+  before answering. Code that waits works on both, and a refused document is raised there
+  (`ESearchWriteFailed`; all or nothing on Meilisearch, `WholeBatch`), never by the call.
+- **A write without an answer is `ESearchUnavailable` and is not resent** (POSTs never are).
+  Upsert and delete are idempotent: the caller sends them again, or the outbox bridge does.
+- **Filters are a typed tree** (`F.Eq`, `F.AnyOf`...): there is no API taking filter text. Filter,
+  sort and facet only on fields declared with that flag; declare `sfFacet` for every facet.
+- **String `Eq` folds accents on Typesense, not on Meilisearch**: keep codes ASCII in keyword
+  fields filtered by equality.
+- **The mock has no typo tolerance**: a test expecting a word *not* to match passes on the mock
+  and fails on an engine unless no text field comes close to the word (its gotcha 6).
+- **One engine per server, shared between threads** (it owns the HTTP transport and its pool).
+- **The outbox bridge** (`PascalSearch.Outbox`) is a handler of pascal-db-faa's local sink. With
+  the default 10 tries, an engine down for about 30 minutes leaves dead deliveries: raise
+  `MaxAttempts` or resync with `Sync` (its `docs/outbox.md`). Run one sink worker per index.
