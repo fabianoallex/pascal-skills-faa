@@ -222,8 +222,8 @@ bloqueantes", "Transações", "Pub/Sub", "Streams e consumer groups". GUI sample
 
 **Read:** `docs/README.md` (the guides, in order: getting started, schema and documents,
 writing and waiting, searching, errors, the mock, the outbox bridge, what each engine does
-differently), then `samples/01-outbox`. `docs/design.md` has the decisions (S1-S24, sections
-8-11); `docs/engine-findings.md` what Meilisearch 1.56.2 and Typesense 30.2 did when probed.
+differently, rebuilding an index), then `samples/01-outbox`. `docs/design.md` has the decisions
+(S1-S31, sections 8-12); `docs/engine-findings.md` what Meilisearch 1.56.2 and Typesense 30.2 did when probed.
 
 - **`WaitFor` before searching what you wrote.** Meilisearch applies writes later; Typesense
   before answering. Code that waits works on both, and a refused document is raised there
@@ -237,6 +237,13 @@ differently), then `samples/01-outbox`. `docs/design.md` has the decisions (S1-S
 - **The mock has no typo tolerance**: a test expecting a word *not* to match passes on the mock
   and fails on an engine unless no text field comes close to the word (its gotcha 6).
 - **One engine per server, shared between threads** (it owns the HTTP transport and its pool).
+- **Highlight (0.2.0+) comes in parts; write it with `H.ToHtml`**, which escapes the value:
+  neither engine escapes HTML. Text fields only.
+- **Rebuild beside the live index, then `ReplaceIndex`** (0.2.0+): set synonyms and engine
+  settings on the new index first, they travel with it. On Typesense an index is an alias to a
+  collection `name@<ms>` since 0.2.0; a 0.1.0 collection still works.
 - **The outbox bridge** (`PascalSearch.Outbox`) is a handler of pascal-db-faa's local sink. With
   the default 10 tries, an engine down for about 30 minutes leaves dead deliveries: raise
   `MaxAttempts` or resync with `Sync` (its `docs/outbox.md`). Run one sink worker per index.
+  From 0.2.0 (pascal-db-faa 0.21.0) a caller's bug (`ESearchArgumentError`,
+  `ESearchRequestError`) is dead at the first try (`EOutboxGiveUp`).
