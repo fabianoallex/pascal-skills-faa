@@ -152,7 +152,8 @@ Source: pascal-amqp-faa README, "Concorrência e ordenação de mensagens".
   client span with its `traceparent` sent, and every `Send` is observed in
   `http.client.request.duration`. No current span, or a request that already carries
   `traceparent`: no span. A caller that retries sets `TPcHttpRequest.ResendCount`. pascal-api-infra-faa's
-  MCP executor uses it (0.34.0+). **Never wrap an OTLP exporter's own transport with
+  MCP executor uses it (0.34.0+), and pascal-search-faa's adapters wrap their own transport (0.3.0+;
+  don't hand them one already wrapped). **Never wrap an OTLP exporter's own transport with
   `RootWhenNoParent`**: every export becomes a span to export, without end (pascal-common-faa
   gotcha 20). Design: its `docs/http-telemetry-design.md`.
 - **The exporter is pascal-api-infra-faa's** (`PascalApi.Otlp`, OTLP/HTTP). It is checked in CI

@@ -223,7 +223,7 @@ bloqueantes", "Transações", "Pub/Sub", "Streams e consumer groups". GUI sample
 **Read:** `docs/README.md` (the guides, in order: getting started, schema and documents,
 writing and waiting, searching, errors, the mock, the outbox bridge, what each engine does
 differently, rebuilding an index), then `samples/01-outbox`. `docs/design.md` has the decisions
-(S1-S31, sections 8-12); `docs/engine-findings.md` what Meilisearch 1.56.2 and Typesense 30.2 did when probed.
+(S1-S36, sections 8-13); `docs/engine-findings.md` what Meilisearch 1.56.2 and Typesense 30.2 did when probed.
 
 - **`WaitFor` before searching what you wrote.** Meilisearch applies writes later; Typesense
   before answering. Code that waits works on both, and a refused document is raised there
@@ -237,6 +237,10 @@ differently, rebuilding an index), then `samples/01-outbox`. `docs/design.md` ha
 - **The mock has no typo tolerance**: a test expecting a word *not* to match passes on the mock
   and fails on an engine unless no text field comes close to the word (its gotcha 6).
 - **One engine per server, shared between threads** (it owns the HTTP transport and its pool).
+- **The adapters trace their HTTP calls (0.3.0+)**: a client span per request under the current
+  span, `http.client.request.duration` always; Meilisearch's task polls only the metric, each
+  wait one `meilisearch.wait_task` span. Don't pass `New` a transport already wrapped with
+  `PcNewTracedHttpTransport`. `url.full` holds index names and, for `Get`, the document's id.
 - **Highlight (0.2.0+) comes in parts; write it with `H.ToHtml`**, which escapes the value:
   neither engine escapes HTML. Text fields only.
 - **Rebuild beside the live index, then `ReplaceIndex`** (0.2.0+): set synonyms and engine
