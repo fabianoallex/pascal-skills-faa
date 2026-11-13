@@ -147,6 +147,14 @@ Source: pascal-amqp-faa README, "Concorrência e ordenação de mensagens".
 - **Spans are pascal-common-faa's** (`PascalCommon.Tracing`: `TPcTracing`, `IPcSpan`, 1.7.0+).
   Libraries instrument with `StartSpan` and need no exporter. pascal-db-faa's statements,
   pascal-redis-faa's commands and pascal-amqp-faa's publish/process join the same trace.
+- **Outgoing HTTP calls: wrap the transport** with `PcNewTracedHttpTransport(PcNewHttpTransport(...))`
+  (pascal-common-faa 1.33.0+, `PascalCommon.Http.Telemetry`). Inside a span, each `Send` is a
+  client span with its `traceparent` sent, and every `Send` is observed in
+  `http.client.request.duration`. No current span, or a request that already carries
+  `traceparent`: no span. A caller that retries sets `TPcHttpRequest.ResendCount`. pascal-api-infra-faa's
+  MCP executor uses it (0.34.0+). **Never wrap an OTLP exporter's own transport with
+  `RootWhenNoParent`**: every export becomes a span to export, without end (pascal-common-faa
+  gotcha 20). Design: its `docs/http-telemetry-design.md`.
 - **The exporter is pascal-api-infra-faa's** (`PascalApi.Otlp`, OTLP/HTTP). It is checked in CI
   against a real OpenTelemetry Collector.
 - **`TPcTracingOptions.FromEnvironment` reads only the process environment.** To honor a `.env`
